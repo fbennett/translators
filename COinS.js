@@ -77,7 +77,6 @@ function retrieveNextCOinS(needFullItems, newItems, couldUseFullItems, doc) {
 	if (needFullItems.length) {
 		var item = needFullItems.shift();
 		
-		Zotero.debug("Looking up contextObject");
 		var search = Zotero.loadTranslator("search");
 		search.setHandler("itemDone", function(obj, newItem) {
 			supplementItem(newItem, item, [], ['contextObject', 'repository']);
@@ -196,7 +195,7 @@ function doWeb(doc, url) {
 	function nsResolver() {
 		return 'http://www.w3.org/1999/xhtml';
 	}
-	
+
 	var spans = doc.evaluate('//x:span[contains(@class, " Z3988") or contains(@class, "Z3988 ") or @class="Z3988"][@title]', doc, nsResolver, XPathResult.ANY_TYPE, null);
 	var span;
 	while (span = spans.iterateNext()) {
@@ -210,6 +209,13 @@ function doWeb(doc, url) {
 					// information, say we'll get full item later
 					newItem.contextObject = spanTitle;
 					couldUseFullItems[newItems.length] = true;
+				}
+				else {
+					for (var creator of newItem.creators) {
+						creator.multi = {
+							_key: {}
+						}
+					}
 				}
 				
 				// title and creators are minimum data to avoid looking up
