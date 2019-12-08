@@ -12,8 +12,7 @@
 	},
 	"inRepository": true,
 	"translatorType": 1,
-	"browserSupport": "gcsibv",
-	"lastUpdated": "2019-02-20 12:32:26"
+	"lastUpdated": "2019-11-30 20:49:31"
 }
 
 /*
@@ -985,14 +984,27 @@ function importItem(newItem, node) {
 			n.eprints+"volume", n.bibo+"volume", n.dc+"source.Volume", n.dcterms+"citation.volume", n.so+"volumeNumber"], true);
 	
 	// issue
+	var issueNodes = [node];
 	if (container) {
-		newItem.issue = getFirstResults([container, node], [n.prism+"number", n.prism2_0+"number", n.prism2_1+"number",
-			n.eprints+"number", n.bibo+"issue", n.dc+"source.Issue", n.dcterms+"citation.issue", n.so+"issueNumber"], true);
+		issueNodes.unshift(container);
 	}
-
+	newItem.issue = getFirstResults(issueNodes, [n.prism + "number",
+		n.prism2_0 + "number",
+		n.prism2_1 + "number",
+		n.eprints + "number",
+		n.bibo + "issue",
+		n.dc + "source.Issue",
+		n.dcterms + "citation.issue",
+		n.so + "issueNumber"], true);
+	
 	// these mean the same thing
 	newItem.patentNumber = newItem.number = newItem.issue;
-	
+
+	// number means the same thing as issue
+	// and will automatically then also map
+	// to patentNumber or reportNumber
+	newItem.number = newItem.issue;
+
 	// edition
 	newItem.edition = getFirstResults(node, [n.prism+"edition", n.prism2_0+"edition", n.prism2_1+"edition", n.bibo+"edition"], true);
 	// these fields mean the same thing
@@ -1488,6 +1500,178 @@ var testCases = [
 				"seeAlso": [
 					"http://d-nb.info/1064805604"
 				]
+			}
+		]
+	},
+	{
+		"type": "import",
+		"input": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<rdf:RDF\n  xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"\n  xmlns:schema=\"http://schema.org/\"\n>\n  <schema:ScholarlyArticle rdf:nodeID=\"N523cd27ac2f84bbca7fe726b027db6d2\">\n    <schema:pageStart>360</schema:pageStart>\n    <schema:isPartOf rdf:resource=\"http://schema.org/Article#bib-2/issue\"/>\n    <schema:about>Catalog</schema:about>\n    <schema:about>Works</schema:about>\n    <schema:pageEnd>368</schema:pageEnd>\n    <schema:author>Smiraglia, Richard P.</schema:author>\n    <schema:name>Be Careful What You Wish For: FRBR, Some Lacunae, A Review</schema:name>\n    <schema:sameAs rdf:resource=\"http://dx.doi.org/10.1080/01639374.2012.682254\"/>\n    <schema:description>The library catalog as a catalog of works was an infectious idea, which together with research led to reconceptualization in the form of the FRBR conceptual model. Two categories of lacunae emerge--the expression entity, and gaps in the model such as aggregates and dynamic documents. Evidence needed to extend the FRBR model is available in contemporary research on instantiation. The challenge for the bibliographic community is to begin to think of FRBR as a form of knowledge organization system, adding a final dimension to classification. The articles in the present special issue offer a compendium of the promise of the FRBR model.</schema:description>\n  </schema:ScholarlyArticle>\n  <schema:PublicationIssue rdf:about=\"http://schema.org/Article#bib-2/issue\">\n    <schema:isPartOf>\n      <schema:Periodical rdf:about=\"http://schema.org/Article#bib-2/periodical\">\n        <schema:volumeNumber>50</schema:volumeNumber>\n        <schema:publisher>Taylor &amp; Francis Group</schema:publisher>\n        <schema:issn>1544-4554</schema:issn>\n        <schema:issn>0163-9374</schema:issn>\n        <schema:name>Cataloging &amp; Classification Quarterly</schema:name>\n        <rdf:type rdf:resource=\"http://schema.org/PublicationVolume\"/>\n      </schema:Periodical>\n    </schema:isPartOf>\n    <schema:issueNumber>5</schema:issueNumber>\n    <schema:datePublished rdf:datatype=\"http://schema.org/Date\">2012</schema:datePublished>\n  </schema:PublicationIssue>\n</rdf:RDF>",
+		"items": [
+			{
+				"itemType": "journalArticle",
+				"title": "Be Careful What You Wish For: FRBR, Some Lacunae, A Review",
+				"creators": [
+					{
+						"firstName": "Richard P.",
+						"lastName": "Smiraglia",
+						"creatorType": "author"
+					}
+				],
+				"ISSN": "1544-4554",
+				"abstractNote": "The library catalog as a catalog of works was an infectious idea, which together with research led to reconceptualization in the form of the FRBR conceptual model. Two categories of lacunae emerge--the expression entity, and gaps in the model such as aggregates and dynamic documents. Evidence needed to extend the FRBR model is available in contemporary research on instantiation. The challenge for the bibliographic community is to begin to think of FRBR as a form of knowledge organization system, adding a final dimension to classification. The articles in the present special issue offer a compendium of the promise of the FRBR model.",
+				"issue": "5",
+				"itemID": "_:n82",
+				"pages": "360-368",
+				"publicationTitle": "Cataloging & Classification Quarterly",
+				"url": "http://dx.doi.org/10.1080/01639374.2012.682254",
+				"volume": "50",
+				"attachments": [],
+				"tags": [
+					{
+						"tag": "Catalog"
+					},
+					{
+						"tag": "Works"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "import",
+		"input": "<?xml version=\"1.0\" encoding=\"utf-8\"?>\n<rdf:RDF\n  xmlns:codemeta=\"https://codemeta.github.io/terms/\"\n  xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"\n  xmlns:schema=\"http://schema.org/\"\n>\n  <schema:SoftwareSourceCode rdf:nodeID=\"N7272101842f544e2a9a7508327eb329b\">\n    <schema:name>CodeMeta: Minimal metadata schemas for science software and code, in JSON-LD</schema:name>\n    <schema:description>CodeMeta is a concept vocabulary that can be used to standardize the exchange of software metadata across repositories and organizations.</schema:description>\n    <schema:dateCreated rdf:datatype=\"http://schema.org/Date\">2017-06-05</schema:dateCreated>\n    <schema:datePublished rdf:datatype=\"http://schema.org/Date\">2017-06-05</schema:datePublished>\n    <schema:version>2.0</schema:version>\n    <schema:softwareVersion>2.0</schema:softwareVersion>\n    <schema:programmingLanguage>JSON-LD</schema:programmingLanguage>\n    <schema:license rdf:resource=\"https://spdx.org/licenses/Apache-2.0\"/>\n    <codemeta:developmentStatus rdf:resource=\"file:///base/data/home/apps/s%7Erdf-translator/2.408516547054015808/active\"/>\n    <codemeta:funding>National Science Foundation Award #1549758; Codemeta: A Rosetta Stone for Metadata in Scientific Software</codemeta:funding>\n    <schema:codeRepository rdf:resource=\"https://github.com/codemeta/codemeta\"/>\n    <schema:downloadUrl rdf:resource=\"https://github.com/codemeta/codemeta/archive/2.0.zip\"/>\n    <codemeta:contIntegration rdf:resource=\"https://travis-ci.org/codemeta/codemeta\"/>\n    <schema:identifier rdf:resource=\"file:///base/data/home/apps/s%7Erdf-translator/2.408516547054015808/CodeMeta\"/>\n    <codemeta:issueTracker rdf:resource=\"https://github.com/codemeta/codemeta/issues\"/>\n    <schema:keywords>software</schema:keywords>\n    <schema:keywords>metadata</schema:keywords>\n    <codemeta:maintainer rdf:resource=\"http://orcid.org/0000-0002-1642-628X\"/>\n    <schema:author rdf:resource=\"http://orcid.org/0000-0002-1642-628X\"/>\n    <schema:author rdf:resource=\"http://orcid.org/0000-0003-0077-4738\"/>\n    <schema:contributor rdf:resource=\"http://orcid.org/0000-0003-4925-7248\"/>\n    <schema:contributor rdf:resource=\"http://orcid.org/0000-0001-5636-0433\"/>\n    <schema:contributor rdf:resource=\"http://orcid.org/0000-0002-9300-5278\"/>\n    <schema:contributor rdf:resource=\"http://orcid.org/0000-0003-1419-2405\"/>\n    <schema:contributor rdf:resource=\"http://orcid.org/0000-0002-8876-7606\"/>\n    <schema:contributor rdf:resource=\"N99ac8e31c13d4ae5994cbc8669e01866\"/>\n    <schema:contributor rdf:resource=\"http://orcid.org/0000-0001-8465-8341\"/>\n    <schema:contributor rdf:resource=\"http://orcid.org/0000-0003-4741-0309\"/>\n    <schema:contributor rdf:resource=\"http://orcid.org/0000-0003-2720-0339\"/>\n    <schema:contributor rdf:resource=\"http://orcid.org/0000-0002-1642-628X\"/>\n    <schema:contributor rdf:resource=\"http://orcid.org/0000-0003-1219-2137\"/>\n    <schema:contributor rdf:resource=\"http://orcid.org/0000-0002-3957-2474\"/>\n    <schema:contributor rdf:resource=\"http://orcid.org/0000-0003-3477-2845\"/>\n    <schema:contributor rdf:resource=\"Nefd7fe71736c433db9ada28e54018b34\"/>\n    <schema:contributor rdf:resource=\"http://orcid.org/0000-0003-1304-1939\"/>\n    <schema:contributor rdf:resource=\"Nc65fe076896346a9a8859f25f5e3bca9\"/>\n    <schema:contributor rdf:resource=\"http://orcid.org/0000-0003-4425-7097\"/>\n    <schema:contributor rdf:resource=\"http://orcid.org/0000-0002-2192-403X\"/>\n  </schema:SoftwareSourceCode>\n  \n  <schema:Person rdf:about=\"http://orcid.org/0000-0003-4925-7248\">\n    <schema:familyName>Druskat</schema:familyName>\n    <schema:email>mail@sdruskat.net</schema:email>\n    <schema:givenName>Stephan</schema:givenName>\n  </schema:Person>\n  <schema:Person rdf:about=\"http://orcid.org/0000-0001-5636-0433\">\n    <schema:givenName>Ashley</schema:givenName>\n    <schema:familyName>Sands</schema:familyName>\n  </schema:Person>\n  <schema:Person rdf:about=\"http://orcid.org/0000-0002-9300-5278\">\n    <schema:givenName>Patricia</schema:givenName>\n    <schema:familyName>Cruse</schema:familyName>\n  </schema:Person>\n  <schema:Person rdf:about=\"http://orcid.org/0000-0003-1419-2405\">\n    <schema:givenName>Martin</schema:givenName>\n    <schema:familyName>Fenner</schema:familyName>\n  </schema:Person>\n  <schema:Person rdf:about=\"http://orcid.org/0000-0002-8876-7606\">\n    <schema:givenName>Neil</schema:givenName>\n    <schema:familyName>Chue Hong</schema:familyName>\n    <schema:email>n.chuehong@epcc.ed.ac.uk</schema:email>\n  </schema:Person>\n  <schema:Person rdf:nodeID=\"N99ac8e31c13d4ae5994cbc8669e01866\">\n    <schema:familyName>Nowak</schema:familyName>\n    <schema:givenName>Krzysztof</schema:givenName>\n  </schema:Person>\n  <schema:Person rdf:about=\"http://orcid.org/0000-0001-8465-8341\">\n    <schema:familyName>Gil</schema:familyName>\n    <schema:email>GIL@ISI.EDU</schema:email>\n    <schema:givenName>Yolanda</schema:givenName>\n  </schema:Person>\n  <schema:Person rdf:about=\"http://orcid.org/0000-0003-4741-0309\">\n    <schema:familyName>Hahnel</schema:familyName>\n    <schema:givenName>Mark</schema:givenName>\n  </schema:Person>\n  <schema:Person rdf:about=\"http://orcid.org/0000-0003-2720-0339\">\n    <schema:email>dskatz@illinois.edu</schema:email>\n    <schema:givenName>Dan</schema:givenName>\n    <schema:familyName>Katz</schema:familyName>\n  </schema:Person>\n  <schema:Person rdf:about=\"http://orcid.org/0000-0002-1642-628X\">\n    <schema:givenName>Carl</schema:givenName>\n    <schema:familyName>Boettiger</schema:familyName>\n    <schema:email>cboettig@gmail.com</schema:email>\n  </schema:Person>\n  <schema:Person rdf:about=\"http://orcid.org/0000-0003-1219-2137\">\n    <schema:email>carole.goble@manchester.ac.uk</schema:email>\n    <schema:familyName>Goble</schema:familyName>\n    <schema:givenName>Carole</schema:givenName>\n  </schema:Person>\n  <schema:Person rdf:about=\"http://orcid.org/0000-0002-3957-2474\">\n    <schema:familyName>Smith</schema:familyName>\n    <schema:givenName>Arfon</schema:givenName>\n    <schema:email>arfon.smith@gmail.com</schema:email>\n  </schema:Person>\n  <schema:Person rdf:about=\"http://orcid.org/0000-0003-3477-2845\">\n    <schema:givenName>Alice</schema:givenName>\n    <schema:email>aallen@ascl.net</schema:email>\n    <schema:familyName>Allen</schema:familyName>\n  </schema:Person>\n  <schema:Person rdf:nodeID=\"Nefd7fe71736c433db9ada28e54018b34\">\n    <schema:email>abbycabs@gmail.com</schema:email>\n    <schema:givenName>Abby Cabunoc</schema:givenName>\n    <schema:familyName>Mayes</schema:familyName>\n  </schema:Person>\n  <schema:Person rdf:about=\"http://orcid.org/0000-0003-1304-1939\">\n    <schema:givenName>Mercè</schema:givenName>\n    <schema:familyName>Crosas</schema:familyName>\n  </schema:Person>\n  <schema:Person rdf:about=\"Nc65fe076896346a9a8859f25f5e3bca9\">\n    <schema:email>luke.coy@rit.edu</schema:email>\n    <schema:familyName>Coy</schema:familyName>\n    <schema:givenName>Luke</schema:givenName>\n  </schema:Person>\n  <schema:Person rdf:about=\"http://orcid.org/0000-0003-4425-7097\">\n    <schema:givenName>Kyle</schema:givenName>\n    <schema:email>Kyle.Niemeyer@oregonstate.edu</schema:email>\n    <schema:familyName>Niemeyer</schema:familyName>\n  </schema:Person>\n  <schema:Person rdf:about=\"http://orcid.org/0000-0002-2192-403X\">\n    <schema:givenName>Peter</schema:givenName>\n    <schema:email>slaughter@nceas.ucsb.edu</schema:email>\n    <schema:familyName>Slaughter</schema:familyName>\n  </schema:Person>\n  <schema:Person rdf:about=\"http://orcid.org/0000-0003-0077-4738\">\n    <schema:givenName>Matthew B.</schema:givenName>\n    <schema:familyName>Jones</schema:familyName>\n    <schema:email>jones@nceas.ucsb.edu</schema:email>\n  </schema:Person>\n</rdf:RDF>",
+		"items": [
+			{
+				"itemType": "computerProgram",
+				"title": "CodeMeta: Minimal metadata schemas for science software and code, in JSON-LD",
+				"creators": [
+					{
+						"creatorType": "programmer",
+						"lastName": "Boettiger",
+						"firstName": "Carl"
+					},
+					{
+						"creatorType": "programmer",
+						"lastName": "Jones",
+						"firstName": "Matthew B."
+					},
+					{
+						"creatorType": "contributor",
+						"lastName": "Druskat",
+						"firstName": "Stephan"
+					},
+					{
+						"creatorType": "contributor",
+						"lastName": "Sands",
+						"firstName": "Ashley"
+					},
+					{
+						"creatorType": "contributor",
+						"lastName": "Cruse",
+						"firstName": "Patricia"
+					},
+					{
+						"creatorType": "contributor",
+						"lastName": "Fenner",
+						"firstName": "Martin"
+					},
+					{
+						"creatorType": "contributor",
+						"lastName": "Chue Hong",
+						"firstName": "Neil"
+					},
+					{
+						"creatorType": "contributor",
+						"lastName": "Gil",
+						"firstName": "Yolanda"
+					},
+					{
+						"creatorType": "contributor",
+						"lastName": "Hahnel",
+						"firstName": "Mark"
+					},
+					{
+						"creatorType": "contributor",
+						"lastName": "Katz",
+						"firstName": "Dan"
+					},
+					{
+						"creatorType": "contributor",
+						"lastName": "Boettiger",
+						"firstName": "Carl"
+					},
+					{
+						"creatorType": "contributor",
+						"lastName": "Goble",
+						"firstName": "Carole"
+					},
+					{
+						"creatorType": "contributor",
+						"lastName": "Smith",
+						"firstName": "Arfon"
+					},
+					{
+						"creatorType": "contributor",
+						"lastName": "Allen",
+						"firstName": "Alice"
+					},
+					{
+						"creatorType": "contributor",
+						"lastName": "Crosas",
+						"firstName": "Mercè"
+					},
+					{
+						"creatorType": "contributor",
+						"lastName": "Coy",
+						"firstName": "Luke"
+					},
+					{
+						"creatorType": "contributor",
+						"lastName": "Niemeyer",
+						"firstName": "Kyle"
+					},
+					{
+						"creatorType": "contributor",
+						"lastName": "Slaughter",
+						"firstName": "Peter"
+					}
+				],
+				"date": "2017-06-05",
+				"abstractNote": "CodeMeta is a concept vocabulary that can be used to standardize the exchange of software metadata across repositories and organizations.",
+				"itemID": "_:n79",
+				"programmingLanguage": "JSON-LD",
+				"rights": "https://spdx.org/licenses/Apache-2.0",
+				"versionNumber": "2.0",
+				"attachments": [],
+				"tags": [
+					{
+						"tag": "metadata"
+					},
+					{
+						"tag": "software"
+					}
+				],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "import",
+		"input": "<rdf:RDF\n xmlns:rdf=\"http://www.w3.org/1999/02/22-rdf-syntax-ns#\"\n xmlns:z=\"http://www.zotero.org/namespaces/export#\"\n xmlns:link=\"http://purl.org/rss/1.0/modules/link/\"\n xmlns:dc=\"http://purl.org/dc/elements/1.1/\"\n xmlns:dcterms=\"http://purl.org/dc/terms/\"\n xmlns:prism=\"http://prismstandard.org/namespaces/1.2/basic/\"\n xmlns:bib=\"http://purl.org/net/biblio#\">\n    <bib:Report rdf:about=\"#test-report\">\n        <z:itemType>report</z:itemType>\n        <prism:number>NLR-TP-96-464</prism:number>\n        <dc:title>Test</dc:title>\n    </bib:Report>\n</rdf:RDF>\n",
+		"items": [
+			{
+				"itemType": "report",
+				"title": "Test",
+				"creators": [],
+				"itemID": "#test-report",
+				"reportNumber": "NLR-TP-96-464",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
 			}
 		]
 	}
