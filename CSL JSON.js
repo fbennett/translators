@@ -73,7 +73,7 @@ function detectImport() {
 	for (var i=0; i<parsedData.length; i++) {
 		var item = parsedData[i];
 		// second argument is for "strict"
-		if (typeof item !== "object" || !item.type || !) {
+		if (typeof item !== "object" || !item.type || !CSL_TYPES[item.type]) {
 			return false;
 		}
 	}
