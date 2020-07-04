@@ -118,18 +118,22 @@ function importNext(data, resolve, reject) {
             item.tags = [];
 			if (d.attachments && d.attachments.length) {
 				for (var att of d.attachments) {
-                    var title = null, path = null;
+                    var title = null, path = null, tags = [];
                     if (typeof att === "string") {
                         title = "Attachment";
                         path = att;
-                    } else if (att.title && att.url) {
+                    } else if (att.title && att.path) {
                         title = att.title;
                         path = att.path;
                     }
+					if (att.tags) {
+						tags = att.tags;
+					}
                     if (title && path) {
 					    item.attachments.push({
 						    title: title,
 						    path: path,
+						    tags: tags,
 						    mimeType: getMimeType(path)
 					    });
                     }
