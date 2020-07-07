@@ -5,7 +5,7 @@
 	"creator": "Stefan Majewski",
 	"target": "xml",
 	"minVersion": "4.0.27",
-	"maxVersion": null,
+	"maxVersion": "",
 	"priority": 25,
 	"inRepository": true,
 	"configOptions": {

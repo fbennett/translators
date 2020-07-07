@@ -5,7 +5,7 @@
 	"creator": "Frank Bennett",
 	"target": "http://(?:www.)*courts.go.jp/app/hanrei_jp",
 	"minVersion": "2.1",
-	"maxVersion": null,
+	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"browserSupport": "gcsv",

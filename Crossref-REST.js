@@ -5,7 +5,7 @@
 	"creator": "Martynas Bagdonas",
 	"target": "",
 	"minVersion": "5.0.0",
-	"maxVersion": null,
+	"maxVersion": "",
 	"priority": 90,
 	"inRepository": true,
 	"browserSupport": "gcsibv",

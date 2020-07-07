@@ -5,7 +5,7 @@
 	"creator": "Frank Bennett",
 	"target": "https://www.courtlistener.com/(opinion/[0-9]+/|\\?q=.*type=o[^a]).*",
 	"minVersion": "1.0",
-	"maxVersion": null,
+	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"browserSupport": "g",

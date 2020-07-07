@@ -5,7 +5,7 @@
 	"creator": "Frank Bennett",
 	"target": "http://kokkai.ndl.go.jp/cgi-bin/KENSAKU/swk_dispdoc.cgi",
 	"minVersion": "1.0.0b3.r1",
-	"maxVersion": null,
+	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"browserSupport": "gcsv",

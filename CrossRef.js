@@ -5,7 +5,7 @@
 	"creator": "Simon Kornblith",
 	"target": "^https?://partneraccess\\.oclc\\.org/",
 	"minVersion": "2.1.9",
-	"maxVersion": null,
+	"maxVersion": "",
 	"priority": 90,
 	"inRepository": true,
 	"browserSupport": "gcsv",

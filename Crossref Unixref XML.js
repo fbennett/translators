@@ -5,7 +5,7 @@
 	"creator": "Sebastian Karcher",
 	"target": "xml",
 	"minVersion": "3.0",
-	"maxVersion": null,
+	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"browserSupport": "gcsibv",
