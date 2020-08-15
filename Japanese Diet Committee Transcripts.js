@@ -37,6 +37,7 @@
 */
 
 
+
 function getSpeakerDoc(doc) {
     var frame = doc.getElementsByTagName("frame");
     if (frame) {
