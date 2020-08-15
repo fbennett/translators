@@ -18,6 +18,7 @@ function detectWeb(doc, url) {
 	}
 }
 
+
 url_base = 'http://kokkai.ndl.go.jp';
 text_url_base = url_base+"/cgi-bin/KENSAKU/swk_dispdoc_text.cgi";
 
