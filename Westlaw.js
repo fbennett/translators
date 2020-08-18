@@ -165,7 +165,7 @@ function shortParty(p) {
 //Case URLS
 function westlawURL(item) { //some items (unpublished ones) will have Archive field info; others will have traditional volume/reporter info. This function works for both. It breaks if you have some of [reporter, volume, page] but not all.
 	let reporter = item.reporter || item.archive
-	let volume = item.reporterVolume || item.yearAsVolume
+	let volume = item.volume || item.yearAsVolume
 	let page = item.firstPage || item.archiveLocation
 	return "https://1.next.westlaw.com/Search/Results.html?query=find:" + volume + "%20" + reporter + "%20" + page + "#autoLogin"
 }
