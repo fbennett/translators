@@ -44,6 +44,7 @@ function doWeb(doc, url) {
 			if (cite) {citationArray.push(cite)}
 		} 
 		NewItem.date = ZU.xpathText(doc, '//span[@id="filedate"]/text()')
+		NewItem.filingDate = NewItem.date //Need this to make a shortened bluebook citation style work 
 		let court = ZU.xpathText(doc, '//span[@id="courtline"]/text()').replace(/\.$/g, "")
 		let note = getAnnotations(doc)
 		if (note) { NewItem.notes.push({'note': note, 'tags': ['note']}) }
