@@ -57,7 +57,7 @@ function detectImport() {
 		"article-newspaper":true, "bill":true, "book":true, "broadcast":true,
 		"chapter":true, "dataset":true, "entry":true, "entry-dictionary":true,
 		"entry-encyclopedia":true, "figure":true, "graphic":true, "interview":true,
-		"legal_case":true, "legislation":true, "manuscript":true, "map":true,
+		"legal_case":true, "legal_commentary": true, "legislation":true, "manuscript":true, "map":true,
 		"motion_picture":true, "musical_score":true, "pamphlet":true,
 		"paper-conference":true, "patent":true, "personal_communication":true,
 		"post":true, "post-weblog":true, "report":true, "review":true, "review-book":true,
@@ -112,6 +112,11 @@ function importNext(data, resolve, reject) {
 	try {
 		var d;
 		while (d = data.shift()) {
+			// Handle legacy CSL JSON exports
+			if (d.journalAbbreviation) {
+				d["container-title-short"] = d.journalAbbreviation;
+				delete d.journalAbbreviation;
+			}
 			var item = new Z.Item();
 			ZU.itemFromCSLJSON(item, d);
 			item.attachments = [];
