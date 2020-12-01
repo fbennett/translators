@@ -513,14 +513,14 @@ var proc = {
 				if (i === 0) {
 					if (citation.type === 8) {
 						item.yearAsVolume = citation.volume;
-						item.firstPage = citation.page;
+						item.pages = citation.page;
 					} else {
-						item.reporterVolume = citeSplit[0];
-						item.reporter = citeSplit.slice(1, -1).join(" ");
-						item.firstPage = citeSplit[citeSplit.length-1];
+						item.reporterVolume = citation.volume;
+						item.reporter = citation.reporter;
+						item.pages = citation.page;
 					}
 				} else {
-					var cite = `${item.reporterVolume} ${item.reporter} ${item.firstPage}`;
+					var cite = `${citation.volume} ${citation.reporter} ${citation.page}`;
 					extras.push(cite);
 				}
 			}
