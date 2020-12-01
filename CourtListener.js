@@ -370,6 +370,8 @@ var codeMap = {
 	"tennessed": "us:c6:tn.d;district.court", 
 	"tennesseeb": "us:c6:tn.d;bankruptcy.court", 
 	"tennsuperct": "us:tn;superior.court.law.equity", 
+	"tennworkcompapp": "us:tn;wcab",
+	"tennworkcompcl": "us:tn;cwcc",
 	"tex": "us:tx;supreme.court", 
 	"texag": "us:tx;attorney.general", 
 	"texapp": "us:tx;court.appeals", 
