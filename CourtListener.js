@@ -508,17 +508,20 @@ var proc = {
 			
 			var firstCite = true;
 			var extras = [];
-			for (var i=0,ilen=citeTypes.length;i<ilen;i++) {
-				if (obj[citeTypes[i]]) {
-					if (firstCite) {
-						var citeSplit = obj[citeTypes[i]].split(" ");
+			for (var i=0,ilen=obj.citations.length; i<ilen; i++) {
+				var citation = obj.citations[i];
+				if (i === 0) {
+					if (citation.type === 8) {
+						item.yearAsVolume = citation.volume;
+						item.firstPage = citation.page;
+					} else {
 						item.reporterVolume = citeSplit[0];
 						item.reporter = citeSplit.slice(1, -1).join(" ");
 						item.firstPage = citeSplit[citeSplit.length-1];
-						firstCite = false;
-					} else {
-						extras.push(obj[citeTypes[i]]);
 					}
+				} else {
+					var cite = `${item.reporterVolume} ${item.reporter} ${item.firstPage}`;
+					extras.push(cite);
 				}
 			}
 			item.dateDecided = obj.date_filed;
@@ -657,7 +660,7 @@ function scrapeData(doc, url) {
 		mimeType: 'text/html'
 	});
 	item.url = url.replace(/\?.*/, '');
-	urls.cluster = ['https://www.courtlistener.com/api/rest/v3/clusters/' + num + "/?fields=docket,sub_opinions,date_filed," + citeTypes.join(",")];
+	urls.cluster = ['https://www.courtlistener.com/api/rest/v3/clusters/' + num + "/?fields=docket,sub_opinions,date_filed,citations"];
 	runURLs(0, 0, item, doc);
 }
 
