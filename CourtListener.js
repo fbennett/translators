@@ -5,12 +5,13 @@
 	"creator": "Frank Bennett",
 	"target": "https://www.courtlistener.com/(opinion/[0-9]+/|\\?q=.*type=o[^a]).*",
 	"minVersion": "1.0",
-	"maxVersion": "",
+	"maxVersion": null,
 	"priority": 100,
 	"inRepository": true,
 	"browserSupport": "g",
-	"lastUpdated": "2018-03-24 07:44:14"
+	"lastUpdated": "2020-12-01 13:27:39"
 }
+
 
 
 var codeMap = {
@@ -455,51 +456,10 @@ var citeTypes = [
 
 var procSegments = [
 	"cluster",
-	"opinion",
 	"docket",
 	"court",
 	"audio"
 ]
-
-function fixAttachments(doc, item) {
-	for (var i=0,ilen=item.attachments.length;i<ilen;i++) {
-		var attachment = item.attachments[i];
-
-		if (attachment.snapshot === false) {
-			continue;
-		}
-
-		// head element
-		var head = doc.createElement("head");
-		var body = doc.createElement('div');
-		var css = "*{margin:0;padding:0;}div.mlz-outer{width: 60em;margin:0 auto;text-align:left;}body{text-align:center;}p{margin-top:0.75em;margin-bottom:0.75em;}div.mlz-link-button a{text-decoration:none;background:#cccccc;color:white;border-radius:1em;font-family:sans;padding:0.2em 0.8em 0.2em 0.8em;}div.mlz-link-button a:hover{background:#bbbbbb;}div.mlz-link-button{margin: 0.7em 0 0.8em 0;}pre.inline{white-space:pre;display:inline;}span.citation{white-space:pre;}";
-		
-		var year = false;
-		var itemTitle = item.caseName;
-		if (item.reporterVolume && item.reporter && item.firstPage) {
-			itemTitle = itemTitle + ', ' + item.reporterVolume + ' ' + item.reporter + ' ' + item.firstPage;
-		}
-		if (item.dateDecided) {
-			year = item.dateDecided.replace(/^.*([0-9][0-9][0-9][0-9]).*/, "$1");
-			itemTitle = itemTitle + ' (' + year + ')';
-		}
-		if (attachment._description) {
-			itemTitle = itemTitle + " [" + attachment._description + "]";
-		}
-		delete attachment._description;
-
-		head.innerHTML = '<title>' + itemTitle + '</title>';
-		head.innerHTML += '<style type="text/css">' + css + '</style>'; 
-		
-		body.innerHTML = attachment._txt;
-		delete attachment._txt;
-
-		var newDoc = ZU.composeDoc(doc, head, body);
-		attachment.document = newDoc;
-	}
-	return item;
-}
-
 
 var proc = {
 	cluster: {
@@ -536,29 +496,6 @@ var proc = {
 			}
 			urls.opinion = sub_opinions;
 			urls.docket = [obj.docket + "?fields=docket_number,case_name,case_name_short,court,audio_files"];
-		}
-	},
-	opinion: {
-		setData: function(item, obj) {
-			// Zotero.debug("proc: opinion");
-
-			// Saving of document fragments not currently possible in 5.0
-			//var textForms = ["html_with_citations", "html", "html_columbia", "html_lawbox", "plain_text"];
-			//var mimeTypes = ["text/html", "text/html", "text/html", "text/html", "text/plain"];
-			//for (var i=0,ilen=textForms.length;i<ilen;i++) {
-			//	if (obj[textForms[i]]) {
-			//		item.attachments.push({
-			//			_description: obj.description,
-			//			_txt: obj[textForms[i]],
-			//			mimeType: mimeTypes[i],
-			//			snapshot: true
-			//		});
-			//		break;
-			//	}
-			//}
-		},
-		setURLs: function(item, obj) {
-			// opinion proc sets up no onward call
 		}
 	},
 	docket: {
@@ -616,9 +553,6 @@ function runURLs(step, pos, item, doc) {
 	var mode = procSegments[step];
 	var url = urls[mode][pos];
 	if (!url || urls.end) {
-		// Saving of document fragments not currently possible in 5.0,
-		// so skip this for now
-		//fixAttachments(doc, item);
 		item.complete();
 		return;
 	}
@@ -657,7 +591,10 @@ function scrapeData(doc, url) {
 	item.attachments.push({
 		url: url,
 		title: 'CourtListener Snapshot',
-		mimeType: 'text/html'
+		mimeType: 'text/html',
+        snapshot: true,
+		css: "*{margin:0;padding:0;}div.mlz-outer{width: 60em;margin:0 auto;text-align:left;}body{text-align:center;}p{margin-top:0.75em;margin-bottom:0.75em;}div.mlz-link-button a{text-decoration:none;background:#cccccc;color:white;border-radius:1em;font-family:sans;padding:0.2em 0.8em 0.2em 0.8em;}div.mlz-link-button a:hover{background:#bbbbbb;}div.mlz-link-button{margin: 0.7em 0 0.8em 0;}pre.inline{white-space:pre;display:inline;}span.citation{white-space:pre;}",
+        elementID: "opinion-content"
 	});
 	item.url = url.replace(/\?.*/, '');
 	urls.cluster = ['https://www.courtlistener.com/api/rest/v3/clusters/' + num + "/?fields=docket,sub_opinions,date_filed,citations"];
