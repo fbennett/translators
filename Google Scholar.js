@@ -287,14 +287,7 @@ var scrapeCase = function (doc, url) {
 		// citelet looks kind of like this
 		// Powell v. McCormack, 395 US 486 - Supreme Court 1969
 		var item = new Zotero.Item("case");
-		var attachmentPointer = url;
-		if (Zotero.isMLZ) {
-			var block = doc.getElementById("gs_opinion_wrapper");
-			if (block) {
-				attachmentPointer = block;
-			}
-		}
-		var factory = new ItemFactory(doc, refFrag.textContent, [attachmentPointer]);
+		var factory = new ItemFactory(doc, refFrag.textContent, [url]);
 		factory.repairCitelet();
 		factory.getDate();
 		factory.getCourt();
@@ -426,11 +419,11 @@ ItemFactory.prototype.getDate = function () {
 		//  if it starts with "Deci" or it doesn't start with the first three letters of a month
 		//  and if it doesn't start with Submitted or Argued
 		// (So, words like "Decided", "Dated", and "Released" will be removed)
-		specificDate = specificDate.replace(/^(?:Deci|(?!Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|Submitted|Argued))[a-z]+[.:]?\s*/i,"")
+		specificDate = specificDate.replace(/^(?:Deci|(?!Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec|Submitted|Argued))[a-z]+[.:]?(?:\s+(?:of|on)\s)*\s*/i,"")
 		// Remove the trailing period, if it is there
 			.replace(/\.$/,"");
 		// If the remaining text is a valid date...
-		if (!isNaN(Date.parse(specificDate))) {
+		if (!isNaN(Date.parse(specificDate)) && specificDate.match(/(?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec)/)) {
 			// ...then use it
 			this.v.date = specificDate;
 			break;
@@ -520,35 +513,17 @@ ItemFactory.prototype.getAttachments = function (doctype) {
 	attachments = [];
 	for (i = 0, ilen = this.attachmentLinks.length; i < ilen; i += 1) {
 		if (!this.attachmentLinks[i]) continue;
-		if ("string" === typeof this.attachmentLinks[i]) {
+		if ("string" === typeof this.attachmentLinks[i] ) {
 			attachments.push({
 				title: attachmentTitle,
 				url:this.attachmentLinks[i],
-				type:"text/html"
+				mimeType:"text/html",
+				snapshot: true,
+				elementID: "gs_opinion",
+				elementClass: null,
+				elementName: null,
+				css: "*{margin:0;padding:0;}.sf-hidden{display:none;}div.mlz-outer{width: 60em;margin:0 auto;text-align:left;}body{text-align:center;}p{margin-top:0.75em;margin-bottom:0.75em;}div.mlz-link-button a{text-decoration:none;background:#cccccc;color:white;border-radius:1em;font-family:sans;padding:0.2em 0.8em 0.2em 0.8em;}div.mlz-link-button a:hover{background:#bbbbbb;}div.mlz-link-button{margin: 0.7em 0 0.8em 0;}"
 			});
-		} else {
-			// DOM fragment and parent doc
-			var block = this.attachmentLinks[i];
-			var doc = block.ownerDocument;
-
-			// String content (title, url, css)
-			var title = doc.getElementsByTagName("title")[0].textContent;
-			var url = doc.documentURI;
-			var css = "*{margin:0;padding:0;}div.mlz-outer{width: 60em;margin:0 auto;text-align:left;}body{text-align:center;}p{margin-top:0.75em;margin-bottom:0.75em;}div.mlz-link-button a{text-decoration:none;background:#cccccc;color:white;border-radius:1em;font-family:sans;padding:0.2em 0.8em 0.2em 0.8em;}div.mlz-link-button a:hover{background:#bbbbbb;}div.mlz-link-button{margin: 0.7em 0 0.8em 0;}";
-
-			// head element
-			var head = doc.createElement("head");
-			head.innerHTML = '<title>' + title + '</title>';
-			head.innerHTML += '<style type="text/css">' + css + '</style>'; 
-
-			var attachmentdoc = Zotero.Utilities.composeDoc(doc, head, block);
-			attachments.push({
-				title: attachmentTitle,
-				document:attachmentdoc
-			});
-
-			// URL for this item
-			this.item.url = url;
 		}
 	}
 	return attachments;
