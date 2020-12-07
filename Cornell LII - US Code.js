@@ -125,27 +125,8 @@ var months = [
 var datesRex = new RegExp("((?:" + months.join("|") + ")\\.?\\s+[0-9][0-9]?,\\s+[0-9][0-9][0-9][0-9])", "g");
 var dateRex = new RegExp("(" + months.join("|") + ")\\.?\\s+([0-9][0-9]?),\\s+([0-9][0-9][0-9][0-9])");
 
-/*
-function addAttachment(doc, rawCite, block, item) {
-	// head element
-	var head = doc.createElement("head");
-	var css = "*{margin:0;padding:0;}div.mlz-outer{width: 60em;margin:0 auto;text-align:left;}body{text-align:center;}p{margin-top:0.75em;margin-bottom:0.75em;}div.mlz-link-button a{text-decoration:none;background:#cccccc;color:white;border-radius:1em;font-family:sans;padding:0.2em 0.8em 0.2em 0.8em;}div.mlz-link-button a:hover{background:#bbbbbb;}div.mlz-link-button{margin: 0.7em 0 0.8em 0;}pre.inline{white-space:pre;display:inline;}span.citation{white-space:pre;}";
-	
-	head.innerHTML = '<title>' + rawCite + '</title>';
-	head.innerHTML += '<style type="text/css">' + css + '</style>'; 
-	
-	var newDoc = ZU.composeDoc(doc, head, block);
-	item.attachments.push({
-	title: "Cornell LII US Code attachment",
-	document: newDoc,
-	mimeType: "text/html",
-	snapshot: true
-	});
-}
-*/
-
 function detectWeb(doc, url) {
-	var codeBlock = ZU.xpath(doc, "//div[@id='block-uscode-text']//div[contains(@class, 'section')]");
+	var codeBlock = ZU.xpath(doc, "//div[contains(@class, 'section')]");
 	if (codeBlock.length > 0) {
 	return 'statute';
 	} else {
@@ -184,38 +165,32 @@ function doWeb(doc, url) {
 			uscDescription = m[4];
 		}
 	}
-	var notesNode = ZU.xpath(doc, "//div[contains(@class, 'quicktabs_main')]/div[1]")[0];
-	var notes = notesNode.textContent;
-	notes = notes.split("\n");
-	var dates = [];
-	for (var note of notes) {
-		if (note.match(/^\s*\(.*\)\.?$/)) {
-			var m = note.match(datesRex);
-			if (m) {
-				for (var dateStr of m) {
-					var mm = dateStr.match(dateRex);
-					var month = pad(months.indexOf(mm[1]) + 1);
-					var day = pad(mm[2]);
-					var d = new Date(mm[3] + "-" + month + "-" + day);
-					dates.push(makeDateStr(d));
-				}
-			}
-		}
-	}
-	dates.sort();
-	var maxDate = dates[dates.length -1];
-	var minDate = dates[0];
-
-	var rawBlock = ZU.xpath(doc, "//div[@class='liicontent']");
-	if (rawBlock.length > 0) {
-		rawBlock = rawBlock[0];
-	} else {
-		rawBlock = false;
-	}
+	// var notesNode = ZU.xpath(doc, "//div[contains(@class, 'quicktabs_main')]/div[1]")[0];
+	var notesNode = doc.getElementById("tab_default_2");
+    if (notesNode) {
+	    var notes = notesNode.textContent;
+	    notes = notes.split("\n");
+	    var dates = [];
+	    for (var note of notes) {
+		    if (note.match(/^\s*\(.*\)\.?$/)) {
+			    var m = note.match(datesRex);
+			    if (m) {
+				    for (var dateStr of m) {
+					    var mm = dateStr.match(dateRex);
+					    var month = pad(months.indexOf(mm[1]) + 1);
+					    var day = pad(mm[2]);
+					    var d = new Date(mm[3] + "-" + month + "-" + day);
+					    dates.push(makeDateStr(d));
+				    }
+			    }
+		    }
+	    }
+	    dates.sort();
+	    var maxDate = dates[dates.length -1];
+	    var minDate = dates[0];
+    }
 	
-	
-	
-	if (uscTitle && uscReporter && uscSection && minDate) {
+	if (uscTitle && uscReporter && uscSection) {
 		var item = new Zotero.Item("statute");
 		item.jurisdiction = "us";
 		item.codeNumber = uscTitle;
@@ -223,7 +198,7 @@ function doWeb(doc, url) {
 		item.section = "sec. " + uscSection;
 		item.abstractNote = uscDescription;
 		item.dateEnacted = minDate;
-		if (minDate !== maxDate) {
+		if (notesNode && minDate !== maxDate) {
 			item.dateAmended = maxDate;
 		}
 		item.url = url;
@@ -231,8 +206,9 @@ function doWeb(doc, url) {
 			title: item.codeNumber + " " + item.code + " " + item.section,
 			snapshot: true,
 			url: url,
-			mimeType: "text/html"
-			
+			mimeType: "text/html",
+            elementClass: "section",
+            css: "*{margin:0;padding:0;}div.mlz-outer{width: 60em;margin:0 auto;text-align:left;}body{text-align:center;}p{margin-top:0.75em;margin-bottom:0.75em;}div.mlz-link-button a{text-decoration:none;background:#cccccc;color:white;border-radius:1em;font-family:sans;padding:0.2em 0.8em 0.2em 0.8em;}div.mlz-link-button a:hover{background:#bbbbbb;}div.mlz-link-button{margin: 0.7em 0 0.8em 0;}pre.inline{white-space:pre;display:inline;}span.citation{white-space:pre;}"
 		});
 		item.complete();
 	}
