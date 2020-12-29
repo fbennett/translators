@@ -1,19 +1,16 @@
 {
 	"translatorID": "6a3e392d-1284-4c81-89b9-4994a2d8a290",
-	"translatorType": 4,
 	"label": "CourtListener",
 	"creator": "Frank Bennett",
-	"target": "https://www.courtlistener.com/(opinion/[0-9]+/|\\?q=.*type=o[^a]).*",
+	"target": "https://www.courtlistener.com/(?:(?:docket|opinion)/[0-9]+/|(?:\\?q=|.*\\&q=)).*",
 	"minVersion": "1.0",
-	"maxVersion": null,
+	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
+	"translatorType": 4,
 	"browserSupport": "g",
-	"lastUpdated": "2020-12-12 03:12:54"
+	"lastUpdated": "2020-12-29 12:47:17"
 }
-
-
-
 
 var codeMap = {
 	"acca": "us:fed;army.court.criminal.appeals", 
@@ -462,6 +459,15 @@ var procSegments = [
 	"audio"
 ]
 
+function fixTitle(str) {
+	var str = ZU.capitalizeTitle(str.toLowerCase(), true);
+	var lst = str.split("\'");
+	for (var i=1,ilen=lst.length;i<ilen;i++) {
+		lst[i] = lst[i].slice(0, 1).toUpperCase() + lst[i].slice(1);
+	}
+	return lst.join("\'");
+}
+
 var proc = {
 	cluster: {
 		setData: function(item, obj) {
@@ -503,9 +509,9 @@ var proc = {
 		setData: function(item, obj) {
 			// Zotero.debug("proc: docket");
 			item.docketNumber = obj.docket_number;
-			item.caseName = obj.case_name;
-			item.title = obj.case_name;
-			item.shortTitle = obj.case_name_short;
+			item.caseName = fixTitle(obj.case_name);
+			item.shortTitle = fixTitle(obj.case_name_short);
+			item.documentDate = obj.date_filed;
 		},
 		setURLs: function(item, obj) {
 			urls.court = [obj.court + "?fields=resource_uri"];
@@ -527,33 +533,40 @@ var proc = {
 			var flp_code = obj.resource_uri.replace(/^.*?\/([^\/]*)\/*$/, "$1");
 			urls.audio = [];
 			if (item.docketNumber && flp_code) {
-				urls.audio.push('https://www.courtlistener.com/api/rest/v3/search/?type=oa&docket_number=' + item.number + '&court=' + flp_code);
+				urls.audio.push('https://www.courtlistener.com/api/rest/v3/search/?type=oa&docket_number=' + item.docketNumber + '&court=' + flp_code);
 			}
 		}
 	},
 	audio: {
 		setData: function(item, obj) {
 			// Zotero.debug("proc: audio");
-			//for (var i=0,ilen=obj.results.length;i<ilen;i++) {
-			//var theattachment = {
-			//	url: 'https://www.courtlistener.com' + obj.results[i].absolute_url,
-			//	title: 'CourtListener Audio' + (i+1),
-			//	snapshot: false
-			//}
-			//item.attachments.push(theattachment);
-			//}
+			for (var i=0,ilen=obj.results.length;i<ilen;i++) {
+			  var theattachment = {
+				url: 'https://www.courtlistener.com' + obj.results[i].absolute_url,
+				title: 'CourtListener Audio' + (i+1),
+				snapshot: false
+			  }
+			  item.attachments.push(theattachment);
+			}
 		},
-		setURLs: function(item, obj) {
+		setURLs: function(item, obj, callback) {
 			// audio is the terminus
-			urls.end = true;
+			if (callback) {
+				urls.callback = callback;
+			} else {
+				urls.end = true;
+			}
 		}
 	}
 }
 
-function runURLs(step, pos, item, doc) {
+function runURLs(step, pos, item, doc, callback) {
 	var mode = procSegments[step];
 	var url = urls[mode][pos];
-	if (!url || urls.end) {
+	if (urls.callback) {
+		callback(item, doc);
+		return;
+	} else if (!url || urls.end) {
 		item.complete();
 		return;
 	}
@@ -561,7 +574,7 @@ function runURLs(step, pos, item, doc) {
 		var obj = JSON.parse(txt);
 		proc[mode].setData(item, obj, doc);
 		if (!urls[mode] || urls[mode].length === 0 || pos === (urls[mode].length-1)) {
-			proc[mode].setURLs(item, obj);
+			proc[mode].setURLs(item, obj, callback);
 			step += 1;
 			// We have all the mode URLs we're going to get at this point,
 			// so run through the sets until we find something we can
@@ -577,7 +590,7 @@ function runURLs(step, pos, item, doc) {
 		} else {
 			pos += 1;
 		}
-		runURLs(step, pos, item, doc)
+		runURLs(step, pos, item, doc, callback)
 	}, null, null, {
 		authorization: 'Token ' + ZU.getAppExtra('6a3e392d-1284-4c81-89b9-4994a2d8a290'),
 		accept: 'application/json'
@@ -586,32 +599,32 @@ function runURLs(step, pos, item, doc) {
 
 var urls = {};
 
-function scrapeData(doc, url) {
+function scrapeCase(doc, url) {
 	var num = url.replace(/^.*\/([0-9]+)\/.*/, "$1")
 	var item = new Zotero.Item("case");
 	item.attachments.push({
 		url: url,
 		title: 'CourtListener Snapshot',
 		mimeType: 'text/html',
-        snapshot: true,
+		snapshot: true,
 		css: "*{margin:0;padding:0;}div.mlz-outer{width: 60em;margin:0 auto;text-align:left;}body{text-align:center;}p{margin-top:0.75em;margin-bottom:0.75em;}div.mlz-link-button a{text-decoration:none;background:#cccccc;color:white;border-radius:1em;font-family:sans;padding:0.2em 0.8em 0.2em 0.8em;}div.mlz-link-button a:hover{background:#bbbbbb;}div.mlz-link-button{margin: 0.7em 0 0.8em 0;}pre.inline{white-space:pre;display:inline;}span.citation{white-space:pre;}",
-        elementID: "opinion-content"
+		elementID: "opinion-content"
 	});
 	item.url = url.replace(/\?.*/, '');
 	urls.cluster = ['https://www.courtlistener.com/api/rest/v3/clusters/' + num + "/?fields=docket,sub_opinions,date_filed,citations"];
 	runURLs(0, 0, item, doc);
 }
 
-function detectWeb(doc, url) {
-	if (url.match(/^https:\/\/www\.courtlistener\.com\/\?q=.*/)) {
-		return "multiple";
-	} else {
-		return "case";
-	}
+function scrapeDocketCase(doc, url) {
+	var num = url.replace(/^.*\/([0-9]+)\/.*/, "$1")
+	var item = new Zotero.Item("case");
+	item.url = url.replace(/\?.*/, '');
+	urls.docket = ['https://www.courtlistener.com/api/rest/v3/dockets/' + num + "/?fields=court,date_filed,docket_number,case_name,case_name_short"];
+	runURLs(1, 0, item, doc);
 }
 
-function getMultiple(doc) {
-	var res = ZU.xpath(doc, '//a[@class="visitable"][contains(@href,"/opinion/")]');
+function getMultiplesList(doc, type) {
+	var res = ZU.xpath(doc, '//article/*/a[@class="visitable"][contains(@href,"/' + type + '/")][1]');
 	if (!res.length) return false;
 	var items = {};
 	for (var i = 0; i < res.length; i++) {
@@ -620,10 +633,87 @@ function getMultiple(doc) {
 	return items;
 }
 
+async function showDocketEntriesList(item, doc) {
+	var items = {};
+	var res = ZU.xpath(doc, '//div[@id="docket-entry-table"]/div[contains(@id, "entry-")]');
+	if (!res.length) return false;
+	var info = {};
+	for (var i=0,ilen=res.length;i<ilen;i++) {
+		var rowNode = res[i];
+		var id = rowNode.getAttribute("id");
+		if (!id.match(/^entry-[0-9]+/)) continue;
+		var documentNumber = id.slice(6);
+		info[documentNumber] = {};
+		info[documentNumber].archiveLocation = documentNumber;
+		var date = ZU.xpath(rowNode, './div[2]/p')[0].textContent
+		info[documentNumber].note = `Event Date: ${date}`;
+		info[documentNumber].attachments = [];
+		// Skip "Main Document" text, which may contain a weird soft-hyphen.
+		var documentName = null;
+		var paras = ZU.xpath(rowNode, './div[position() > 2]//p');
+		for (var j=0,jlen=paras.length;j<jlen;j++) {
+			var pNode = paras[j];
+			var pTxt = pNode.textContent.trim();
+			var pTxtClean = pTxt.replace(/[^\ a-zA-Z0-9]/g, "");
+			if (!pTxtClean || pTxtClean === "Main Document") continue;
+			documentName = pTxt;
+			info[documentNumber].documentName = documentName;
+			break;
+		}
+		var anchors = ZU.xpath(rowNode, './/a');
+		for (var j=0,jlen=anchors.length;j<jlen;j++) {
+			var myurl = anchors[j].getAttribute("href");
+			if (myurl.slice(-4) !== ".pdf") continue;
+			info[documentNumber].attachments.push({
+				mimeType: "application/pdf",
+				url: myurl
+			});
+			break;
+		}
+		items[documentNumber] = `#${documentNumber}: ${date}, ${documentName}`;
+	}
+	Zotero.selectItems(items, function (items) {
+		for (var key in items) {
+			var newItem = new Zotero.Item("case");
+			for (var field in item) {
+				if (field === "complete") continue;
+				newItem[field] = item[field];
+			}
+			for (var field in info[key]) {
+				newItem[field] = info[key][field];
+			}
+			newItem.complete();
+		}
+	});
+}
+
+function doDocketEntries(doc, url) {
+	var num = url.replace(/^.*\/([0-9]+)\/.*/, "$1")
+	var item = new Zotero.Item("case");
+	item.url = url.replace(/\?.*/, '');
+	urls.docket = ['https://www.courtlistener.com/api/rest/v3/dockets/' + num + "/"];
+	runURLs(1, 0, item, doc, showDocketEntriesList)
+}
+
+function detectWeb(doc, url) {
+	if (url.match(/\/opinion\/[0-9]+/)) {
+		return "case"
+	} else if (url.match(/\/docket\/[0-9]+/)) {
+		return "multiple";
+	} else if (url.match(/[\?\&]q=/)) {
+		return "multiple";
+	} else {
+		return false;
+	}
+}
 
 function doWeb (doc, url) {
-	if ("multiple" == detectWeb(doc, url)) {
-		var items = getMultiple(doc);
+	if (url.match(/\/opinion\/[0-9]+/)) {
+		// Zotero.debug("Fetch case");
+		scrapeCase(doc, url)
+	} else if (url.match(/[\?\&]type=r/)) {
+		// Zotero.debug("Fetch multiple docket cases");
+		var items = getMultiplesList(doc, "docket");
 		Zotero.selectItems(items, function (items) {
 			if (!items) {
 				return true;
@@ -632,9 +722,25 @@ function doWeb (doc, url) {
 			for (var i in items) {
 				caseURLs.push(i);
 			}
-			ZU.processDocuments(caseURLs, scrapeData);
+			ZU.processDocuments(caseURLs, scrapeDocketCase);
 		});
+	} else if (url.match(/[\?\&]q=/)) {
+		// Zotero.debug("Fetch multiple opinions");
+		var items = getMultiplesList(doc, "opinion");
+		Zotero.selectItems(items, function (items) {
+			if (!items) {
+				return true;
+			}
+			var caseURLs = [];
+			for (var i in items) {
+				caseURLs.push(i);
+			}
+			ZU.processDocuments(caseURLs, scrapeCase);
+		});
+	} else if (url.match(/\/docket\//)) {
+		// Zotero.debug("Fetch multiple docket entries");
+		doDocketEntries(doc, url);
 	} else {
-		scrapeData(doc, url)
+		Zotero.debug("Nothing at all");
 	}
 }
