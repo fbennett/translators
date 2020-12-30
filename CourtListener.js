@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "g",
-	"lastUpdated": "2020-12-29 12:47:17"
+	"lastUpdated": "2020-12-30 12:51:37"
 }
 
 var codeMap = {
@@ -511,7 +511,7 @@ var proc = {
 			item.docketNumber = obj.docket_number;
 			item.caseName = fixTitle(obj.case_name);
 			item.shortTitle = fixTitle(obj.case_name_short);
-			item.documentDate = obj.date_filed;
+			item.filingDate = obj.date_filed;
 		},
 		setURLs: function(item, obj) {
 			urls.court = [obj.court + "?fields=resource_uri"];
@@ -644,9 +644,9 @@ async function showDocketEntriesList(item, doc) {
 		if (!id.match(/^entry-[0-9]+/)) continue;
 		var documentNumber = id.slice(6);
 		info[documentNumber] = {};
-		info[documentNumber].archiveLocation = documentNumber;
-		var date = ZU.xpath(rowNode, './div[2]/p')[0].textContent
-		info[documentNumber].note = `Event Date: ${date}`;
+		info[documentNumber].documentNumber = documentNumber;
+		var date = ZU.xpath(rowNode, './div[2]/p')[0].textContent;
+		info[documentNumber].extra = `Event Date: ${date}`;
 		info[documentNumber].attachments = [];
 		// Skip "Main Document" text, which may contain a weird soft-hyphen.
 		var documentName = null;
