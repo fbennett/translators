@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "g",
-	"lastUpdated": "2021-01-01 07:42:01"
+	"lastUpdated": "2021-01-01 14:26:56"
 }
 
 var codeMap = {
@@ -482,15 +482,19 @@ function padDocketNumber(str, len) {
 }
 
 function fixCourtCode(str) {
-	str = str.toLowerCase().replace(/^(c|.*(?:cr|c.?v|misc).*)$/, (p, p1) => {
+	str = str.toLowerCase().replace(/^(bk|c|.*(?:bank|misc|cr|c.?v).*)$/, (p, p1) => {
 		if (p1 === "c") {
 			return "cv";
+		} else if (p1 === "bk") {
+			return "bk";
 		} else if (p1.indexOf("cr") > -1) {
 			return "cr";
 		} else if (p1.match(/c.?v/)) {
 			return "cv";
 		} else if (p1.indexOf("misc") > -1) {
 			return "mc";
+		} else if (p1.indexOf("bank") > -1) {
+			return "bk";
 		} else {
 			return p;
 		}
@@ -510,8 +514,8 @@ function normalizeDocketNumber(str) {
 		p3 = padDocketNumber(p2, 5);
 		return `${p1}-${p2}`;
 	}
-	str = str.replace(/^([0-9]+)[\s-–~]+([\s.a-zA-Z]+)[\s-–~]+([0-9]+)/, _normalizeThree);
-	str = str.replace(/^([0-9]+)[\s-–~]+([0-9]+)/, _normalizeTwo);
+	str = str.replace(/^[^0-9]*(?:[0-9]:)*([0-9]+)[\s-–~]*([\s.a-zA-Z]+)[\s-–~]*([0-9]+).*$/, _normalizeThree);
+	str = str.replace(/^([0-9]+)[\s-–~]+([0-9]+)$/, _normalizeTwo);
 	return str;
 }
 
@@ -530,6 +534,9 @@ function fixDocketNumber(item) {
 	if (item.jurisdiction.match(/^us:c[0-9]/)) {
 		var docnos = item.docketNumber.split(/,\s+/);
 		var label = null;
+		if (item.court === "bankruptcy.court") {
+			label = "bk";
+		}
 		for (var i=0,ilen=docnos.length;i<ilen;i++) {
 			// Remove all trailing cruft always
 			docnos[i] = docnos[i].replace(/[^0-9]+$/, "");
@@ -877,7 +884,6 @@ var testCases = [
 				"url": "https://www.courtlistener.com/opinion/2456202/valore-v-islamic-republic-of-iran/",
 				"attachments": [
 					{
-						"title": "CourtListener Snapshot",
 						"mimeType": "text/html",
 						"snapshot": true,
 						"css": "*{margin:0;padding:0;}div.mlz-outer{width: 60em;margin:0 auto;text-align:left;}body{text-align:center;}p{margin-top:0.75em;margin-bottom:0.75em;}div.mlz-link-button a{text-decoration:none;background:#cccccc;color:white;border-radius:1em;font-family:sans;padding:0.2em 0.8em 0.2em 0.8em;}div.mlz-link-button a:hover{background:#bbbbbb;}div.mlz-link-button{margin: 0.7em 0 0.8em 0;}pre.inline{white-space:pre;display:inline;}span.citation{white-space:pre;}",
@@ -908,7 +914,6 @@ var testCases = [
 				"url": "https://www.courtlistener.com/opinion/2360732/in-re-search-of-certain-cell-phones/",
 				"attachments": [
 					{
-						"title": "CourtListener Snapshot",
 						"mimeType": "text/html",
 						"snapshot": true,
 						"css": "*{margin:0;padding:0;}div.mlz-outer{width: 60em;margin:0 auto;text-align:left;}body{text-align:center;}p{margin-top:0.75em;margin-bottom:0.75em;}div.mlz-link-button a{text-decoration:none;background:#cccccc;color:white;border-radius:1em;font-family:sans;padding:0.2em 0.8em 0.2em 0.8em;}div.mlz-link-button a:hover{background:#bbbbbb;}div.mlz-link-button{margin: 0.7em 0 0.8em 0;}pre.inline{white-space:pre;display:inline;}span.citation{white-space:pre;}",
@@ -937,7 +942,6 @@ var testCases = [
 				"url": "https://www.courtlistener.com/opinion/4456832/antoon-v-securus-technologies-inc/",
 				"attachments": [
 					{
-						"title": "CourtListener Snapshot",
 						"mimeType": "text/html",
 						"snapshot": true,
 						"css": "*{margin:0;padding:0;}div.mlz-outer{width: 60em;margin:0 auto;text-align:left;}body{text-align:center;}p{margin-top:0.75em;margin-bottom:0.75em;}div.mlz-link-button a{text-decoration:none;background:#cccccc;color:white;border-radius:1em;font-family:sans;padding:0.2em 0.8em 0.2em 0.8em;}div.mlz-link-button a:hover{background:#bbbbbb;}div.mlz-link-button{margin: 0.7em 0 0.8em 0;}pre.inline{white-space:pre;display:inline;}span.citation{white-space:pre;}",
@@ -969,7 +973,157 @@ var testCases = [
 				"url": "https://www.courtlistener.com/opinion/2375881/flynn-v-doyle/",
 				"attachments": [
 					{
-						"title": "CourtListener Snapshot",
+						"mimeType": "text/html",
+						"snapshot": true,
+						"css": "*{margin:0;padding:0;}div.mlz-outer{width: 60em;margin:0 auto;text-align:left;}body{text-align:center;}p{margin-top:0.75em;margin-bottom:0.75em;}div.mlz-link-button a{text-decoration:none;background:#cccccc;color:white;border-radius:1em;font-family:sans;padding:0.2em 0.8em 0.2em 0.8em;}div.mlz-link-button a:hover{background:#bbbbbb;}div.mlz-link-button{margin: 0.7em 0 0.8em 0;}pre.inline{white-space:pre;display:inline;}span.citation{white-space:pre;}",
+						"elementID": "opinion-content"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.courtlistener.com/opinion/2115303/southeastern-metals-v-florida-metal-products/",
+		"items": [
+			{
+				"itemType": "case",
+				"caseName": "Southeastern Metals v. Florida Metal Products",
+				"creators": [],
+				"dateDecided": "2011-04-21",
+				"court": "district.court",
+				"docketNumber": "09-cv-01250",
+				"firstPage": "1341",
+				"jurisdiction": "us:c11:fl.md",
+				"reporter": "F. Supp. 2d",
+				"reporterVolume": 778,
+				"url": "https://www.courtlistener.com/opinion/2115303/southeastern-metals-v-florida-metal-products/",
+				"attachments": [
+					{
+						"mimeType": "text/html",
+						"snapshot": true,
+						"css": "*{margin:0;padding:0;}div.mlz-outer{width: 60em;margin:0 auto;text-align:left;}body{text-align:center;}p{margin-top:0.75em;margin-bottom:0.75em;}div.mlz-link-button a{text-decoration:none;background:#cccccc;color:white;border-radius:1em;font-family:sans;padding:0.2em 0.8em 0.2em 0.8em;}div.mlz-link-button a:hover{background:#bbbbbb;}div.mlz-link-button{margin: 0.7em 0 0.8em 0;}pre.inline{white-space:pre;display:inline;}span.citation{white-space:pre;}",
+						"elementID": "opinion-content"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.courtlistener.com/opinion/2573394/nco-financial-systems-inc-v-yari/",
+		"items": [
+			{
+				"itemType": "case",
+				"caseName": "Nco Financial Systems, Inc. v. Yari",
+				"creators": [],
+				"dateDecided": "2006-03-30",
+				"court": "district.court",
+				"docketNumber": "06-cv-00286",
+				"firstPage": "1237",
+				"jurisdiction": "us:c10:co.d",
+				"reporter": "F. Supp. 2d",
+				"reporterVolume": 422,
+				"shortTitle": "Yari",
+				"url": "https://www.courtlistener.com/opinion/2573394/nco-financial-systems-inc-v-yari/",
+				"attachments": [
+					{
+						"mimeType": "text/html",
+						"snapshot": true,
+						"css": "*{margin:0;padding:0;}div.mlz-outer{width: 60em;margin:0 auto;text-align:left;}body{text-align:center;}p{margin-top:0.75em;margin-bottom:0.75em;}div.mlz-link-button a{text-decoration:none;background:#cccccc;color:white;border-radius:1em;font-family:sans;padding:0.2em 0.8em 0.2em 0.8em;}div.mlz-link-button a:hover{background:#bbbbbb;}div.mlz-link-button{margin: 0.7em 0 0.8em 0;}pre.inline{white-space:pre;display:inline;}span.citation{white-space:pre;}",
+						"elementID": "opinion-content"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.courtlistener.com/opinion/1522154/in-re-rodgers/?type=o&q=rodgers&type=o&order_by=score%20desc&stat_Precedential=on&court=bapme%20bapma%20almb%20alnb%20alsb%20akb%20arb%20areb%20arwb%20cacb%20caeb%20canb%20casb%20cob%20ctb%20deb%20dcb%20flmb%20flnb%20flsb%20gamb%20ganb%20gasb%20hib%20idb%20ilcb%20ilnb%20ilsb%20innb%20insb%20ianb%20iasb%20ksb%20kyeb%20kywb%20laeb%20lamb%20lawb%20meb%20mdb%20mab%20mieb%20miwb%20mnb%20msnb%20mssb%20moeb%20mowb%20mtb%20nebraskab%20nvb%20nhb%20njb%20nmb%20nyeb%20nynb%20nysb%20nywb%20nceb%20ncmb%20ncwb%20ndb%20ohnb%20ohsb%20okeb%20oknb%20okwb%20orb%20paeb%20pamb%20pawb%20rib%20scb%20sdb%20tneb%20tnmb%20tnwb%20tennesseeb%20txeb%20txnb%20txsb%20txwb%20utb%20vtb%20vaeb%20vawb%20waeb%20wawb%20wvnb%20wvsb%20wieb%20wiwb%20wyb%20gub%20nmib%20prb%20vib",
+		"items": [
+			{
+				"itemType": "case",
+				"caseName": "In Re Rodgers",
+				"creators": [],
+				"dateDecided": "2010-05-19",
+				"court": "bankruptcy.court",
+				"docketNumber": "09-bk-13886",
+				"firstPage": "910",
+				"jurisdiction": "us:c11:fl.md",
+				"reporter": "B.R.",
+				"reporterVolume": 430,
+				"url": "https://www.courtlistener.com/opinion/1522154/in-re-rodgers/",
+				"attachments": [
+					{
+						"mimeType": "text/html",
+						"snapshot": true,
+						"css": "*{margin:0;padding:0;}div.mlz-outer{width: 60em;margin:0 auto;text-align:left;}body{text-align:center;}p{margin-top:0.75em;margin-bottom:0.75em;}div.mlz-link-button a{text-decoration:none;background:#cccccc;color:white;border-radius:1em;font-family:sans;padding:0.2em 0.8em 0.2em 0.8em;}div.mlz-link-button a:hover{background:#bbbbbb;}div.mlz-link-button{margin: 0.7em 0 0.8em 0;}pre.inline{white-space:pre;display:inline;}span.citation{white-space:pre;}",
+						"elementID": "opinion-content"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.courtlistener.com/opinion/1816815/in-re-singletary/?q=rodgers&type=o&order_by=score%20desc&stat_Precedential=on&filed_after=01%2F01%2F2006&court=bapme%20bapma%20almb%20alnb%20alsb%20akb%20arb%20areb%20arwb%20cacb%20caeb%20canb%20casb%20cob%20ctb%20deb%20dcb%20flmb%20flnb%20flsb%20gamb%20ganb%20gasb%20hib%20idb%20ilcb%20ilnb%20ilsb%20innb%20insb%20ianb%20iasb%20ksb%20kyeb%20kywb%20laeb%20lamb%20lawb%20meb%20mdb%20mab%20mieb%20miwb%20mnb%20msnb%20mssb%20moeb%20mowb%20mtb%20nebraskab%20nvb%20nhb%20njb%20nmb%20nyeb%20nynb%20nysb%20nywb%20nceb%20ncmb%20ncwb%20ndb%20ohnb%20ohsb%20okeb%20oknb%20okwb%20orb%20paeb%20pamb%20pawb%20rib%20scb%20sdb%20tneb%20tnmb%20tnwb%20tennesseeb%20txeb%20txnb%20txsb%20txwb%20utb%20vtb%20vaeb%20vawb%20waeb%20wawb%20wvnb%20wvsb%20wieb%20wiwb%20wyb%20gub%20nmib%20prb%20vib",
+		"items": [
+			{
+				"itemType": "case",
+				"caseName": "James Merritt, Jr.",
+				"creators": [],
+				"dateDecided": "2006-10-19",
+				"court": "bankruptcy.court",
+				"docketNumber": "17-bk-30699",
+				"firstPage": "455",
+				"jurisdiction": "us:c5:tx.sd",
+				"reporter": "B.R.",
+				"reporterVolume": 354,
+				"url": "https://www.courtlistener.com/opinion/1816815/in-re-singletary/",
+				"attachments": [
+					{
+						"mimeType": "text/html",
+						"snapshot": true,
+						"css": "*{margin:0;padding:0;}div.mlz-outer{width: 60em;margin:0 auto;text-align:left;}body{text-align:center;}p{margin-top:0.75em;margin-bottom:0.75em;}div.mlz-link-button a{text-decoration:none;background:#cccccc;color:white;border-radius:1em;font-family:sans;padding:0.2em 0.8em 0.2em 0.8em;}div.mlz-link-button a:hover{background:#bbbbbb;}div.mlz-link-button{margin: 0.7em 0 0.8em 0;}pre.inline{white-space:pre;display:inline;}span.citation{white-space:pre;}",
+						"elementID": "opinion-content"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.courtlistener.com/opinion/1991450/in-re-blanton-smith-corp/?type=o&q=smith&type=o&order_by=score%20desc&stat_Precedential=on&court=almb%20alnb%20alsb%20akb%20arb%20areb%20arwb%20cacb%20caeb%20canb%20casb%20cob%20ctb%20deb%20dcb%20flmb%20flnb%20flsb%20gamb%20ganb%20gasb%20hib%20idb%20ilcb%20ilnb%20ilsb%20innb%20insb%20ianb%20iasb%20ksb%20kyeb%20kywb%20laeb%20lamb%20lawb%20meb%20mdb%20mab%20mieb%20miwb%20mnb%20msnb%20mssb%20moeb%20mowb%20mtb%20nebraskab%20nvb%20nhb%20njb%20nmb%20nyeb%20nynb%20nysb%20nywb%20nceb%20ncmb%20ncwb%20ndb%20ohnb%20ohsb%20okeb%20oknb%20okwb%20orb%20paeb%20pamb%20pawb%20rib%20scb%20sdb%20tneb%20tnmb%20tnwb%20tennesseeb%20txeb%20txnb%20txsb%20txwb%20utb%20vtb%20vaeb%20vawb%20waeb%20wawb%20wvnb%20wvsb%20wieb%20wiwb%20wyb%20gub%20nmib%20prb%20vib",
+		"items": [
+			{
+				"itemType": "case",
+				"caseName": "In Re Blanton Smith Corp.",
+				"creators": [],
+				"dateDecided": "1980-11-26",
+				"court": "bankruptcy.court",
+				"docketNumber": "80-bk-01019, 80-bk-01020",
+				"firstPage": "410",
+				"jurisdiction": "us:c6:tn.md",
+				"reporter": "B.R.",
+				"reporterVolume": 7,
+				"url": "https://www.courtlistener.com/opinion/1991450/in-re-blanton-smith-corp/",
+				"attachments": [
+					{
 						"mimeType": "text/html",
 						"snapshot": true,
 						"css": "*{margin:0;padding:0;}div.mlz-outer{width: 60em;margin:0 auto;text-align:left;}body{text-align:center;}p{margin-top:0.75em;margin-bottom:0.75em;}div.mlz-link-button a{text-decoration:none;background:#cccccc;color:white;border-radius:1em;font-family:sans;padding:0.2em 0.8em 0.2em 0.8em;}div.mlz-link-button a:hover{background:#bbbbbb;}div.mlz-link-button{margin: 0.7em 0 0.8em 0;}pre.inline{white-space:pre;display:inline;}span.citation{white-space:pre;}",
