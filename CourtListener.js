@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "g",
-	"lastUpdated": "2020-12-30 12:51:37"
+	"lastUpdated": "2021-01-01 07:42:01"
 }
 
 var codeMap = {
@@ -468,6 +468,93 @@ function fixTitle(str) {
 	return lst.join("\'");
 }
 
+function padDocketNumber(str, len) {
+	if (len < 0) {
+		str = str.slice(len);
+	} else {
+		str = str.slice(0, len);
+	}
+	len = Math.abs(len);
+	while (str.length < len) {
+		str = `0${str}`;
+	}
+	return str;
+}
+
+function fixCourtCode(str) {
+	str = str.toLowerCase().replace(/^(c|.*(?:cr|c.?v|misc).*)$/, (p, p1) => {
+		if (p1 === "c") {
+			return "cv";
+		} else if (p1.indexOf("cr") > -1) {
+			return "cr";
+		} else if (p1.match(/c.?v/)) {
+			return "cv";
+		} else if (p1.indexOf("misc") > -1) {
+			return "mc";
+		} else {
+			return p;
+		}
+	});
+	return str;
+}
+
+function normalizeDocketNumber(str) {
+	function _normalizeThree(p, p1, p2, p3) {
+		p1 = padDocketNumber(p1, -2);
+		p2 = fixCourtCode(p2);
+		p3 = padDocketNumber(p3, 5);
+		return `${p1}-${p2}-${p3}`;
+	}
+	function _normalizeTwo(p, p1, p2) {
+		p1 = padDocketNumber(p1, -2);
+		p3 = padDocketNumber(p2, 5);
+		return `${p1}-${p2}`;
+	}
+	str = str.replace(/^([0-9]+)[\s-–~]+([\s.a-zA-Z]+)[\s-–~]+([0-9]+)/, _normalizeThree);
+	str = str.replace(/^([0-9]+)[\s-–~]+([0-9]+)/, _normalizeTwo);
+	return str;
+}
+
+function fixDocketNumber(item) {
+	// Abort if nothing to work with
+	if (!item.docketNumber) return item.docketNumber;
+	// Just strip weird numeric prefix for RECAP docket numbers
+	if (item.url.indexOf("/recap") > -1) {
+		var str = item.docketNumber
+		if (str) {
+			str = item.docketNumber.replace(/^[0-9]:/, "");
+		}
+		return str;
+	}
+	// Fix docket numbers on federal trial and appellate cases
+	if (item.jurisdiction.match(/^us:c[0-9]/)) {
+		var docnos = item.docketNumber.split(/,\s+/);
+		var label = null;
+		for (var i=0,ilen=docnos.length;i<ilen;i++) {
+			// Remove all trailing cruft always
+			docnos[i] = docnos[i].replace(/[^0-9]+$/, "");
+			var docno = docnos[i];
+			// Remove any weird numeric prefix on docket number
+			docnos[i] = docnos[i].replace(/[0-9]:/, "");
+			// If a uniform docket number, normalize it
+			docnos[i] = normalizeDocketNumber(docnos[i]);
+			// Check for leading label and regular numeric pair
+			var m = docno.match(/(^[^0-9]*)([0-9]+)[\s-–~]([0-9]+)$/);
+			// If no leading label or docno is irregular, leave this one unscathed
+			if (!m || (!label && !m[1])) continue;
+			// Check leading label for a hint
+			if (!label) {
+				label = fixCourtCode(m[1]);
+			}
+			docnos[i] = normalizeDocketNumber(`${m[2]}-${label}-${m[3]}`);
+		}
+		return docnos.join(", ");
+	} else {
+		// General cleanup, remove funky labels
+		return item.docketNumber.replace(/^[^0-9]\s[0-9]/, "");
+	}
+}
+
 var proc = {
 	cluster: {
 		setData: function(item, obj) {
@@ -528,6 +615,7 @@ var proc = {
 			} else {
 				item.jurisdiction = flp_code;
 			}
+			item.docketNumber = fixDocketNumber(item);
 		},
 		setURLs: function(item, obj) {
 			var flp_code = obj.resource_uri.replace(/^.*?\/([^\/]*)\/*$/, "$1");
@@ -604,7 +692,6 @@ function scrapeCase(doc, url) {
 	var item = new Zotero.Item("case");
 	item.attachments.push({
 		url: url,
-		title: 'CourtListener Snapshot',
 		mimeType: 'text/html',
 		snapshot: true,
 		css: "*{margin:0;padding:0;}div.mlz-outer{width: 60em;margin:0 auto;text-align:left;}body{text-align:center;}p{margin-top:0.75em;margin-bottom:0.75em;}div.mlz-link-button a{text-decoration:none;background:#cccccc;color:white;border-radius:1em;font-family:sans;padding:0.2em 0.8em 0.2em 0.8em;}div.mlz-link-button a:hover{background:#bbbbbb;}div.mlz-link-button{margin: 0.7em 0 0.8em 0;}pre.inline{white-space:pre;display:inline;}span.citation{white-space:pre;}",
@@ -648,27 +735,51 @@ async function showDocketEntriesList(item, doc) {
 		var date = ZU.xpath(rowNode, './div[2]/p')[0].textContent;
 		info[documentNumber].extra = `Event Date: ${date}`;
 		info[documentNumber].attachments = [];
+		info[documentNumber].url = item.url + "#" + id;
 		// Skip "Main Document" text, which may contain a weird soft-hyphen.
 		var documentName = null;
 		var paras = ZU.xpath(rowNode, './div[position() > 2]//p');
 		for (var j=0,jlen=paras.length;j<jlen;j++) {
 			var pNode = paras[j];
 			var pTxt = pNode.textContent.trim();
-			var pTxtClean = pTxt.replace(/[^\ a-zA-Z0-9]/g, "");
+			var pTxtClean = pTxt.replace(/\u00AD/g, "");
 			if (!pTxtClean || pTxtClean === "Main Document") continue;
 			documentName = pTxt;
 			info[documentNumber].documentName = documentName;
 			break;
 		}
-		var anchors = ZU.xpath(rowNode, './/a');
-		for (var j=0,jlen=anchors.length;j<jlen;j++) {
-			var myurl = anchors[j].getAttribute("href");
-			if (myurl.slice(-4) !== ".pdf") continue;
-			info[documentNumber].attachments.push({
-				mimeType: "application/pdf",
-				url: myurl
-			});
-			break;
+		var anchorRows = ZU.xpath(rowNode, './/div[contains(@class, "recap-documents")]');
+		for (var j=0,jlen=anchorRows.length;j<jlen;j++) {
+			var row = anchorRows[j];
+			var buttonElem = row.children[2];
+			var linkElem = ZU.xpath(buttonElem, './/a')[0];
+			if (linkElem) {
+				var myurl = linkElem.getAttribute("href");
+				var attachment = {
+					mimeType: "application/pdf",
+					url: myurl
+				}
+				// If there is just one attachment, or if the
+				// attachment has first-pos label of "Main Document",
+				// omit title so that the attachment is automatically
+				// named after the case.
+				var labelOne = row.children[0].textContent.trim().replace(/\u00AD/g, "");
+				if (labelOne !== "Main Document" && anchorRows.length > 1) {
+					var label = [];
+					if (labelOne) {
+						label.push(labelOne);
+					}
+					var labelTwo = row.children[1].textContent.trim().replace(/\u00AD/g, "");
+					if (labelTwo) {
+						label.push(labelTwo);
+					}
+					label = label.join(": ");
+					if (label) {
+						attachment.title = label;
+					}
+				}
+				info[documentNumber].attachments.push(attachment);
+			}
 		}
 		items[documentNumber] = `#${documentNumber}: ${date}, ${documentName}`;
 	}
@@ -691,7 +802,7 @@ function doDocketEntries(doc, url) {
 	var num = url.replace(/^.*\/([0-9]+)\/.*/, "$1")
 	var item = new Zotero.Item("case");
 	item.url = url.replace(/\?.*/, '');
-	urls.docket = ['https://www.courtlistener.com/api/rest/v3/dockets/' + num + "/"];
+	urls.docket = ['https://www.courtlistener.com/api/rest/v3/dockets/' + num + "/?fields=docket_number,case_name,case_name_short,court,audio_files"];
 	runURLs(1, 0, item, doc, showDocketEntriesList)
 }
 
@@ -708,6 +819,7 @@ function detectWeb(doc, url) {
 }
 
 function doWeb (doc, url) {
+	url = url.replace(/\#.*$/, "");
 	if (url.match(/\/opinion\/[0-9]+/)) {
 		// Zotero.debug("Fetch case");
 		scrapeCase(doc, url)
@@ -744,3 +856,131 @@ function doWeb (doc, url) {
 		Zotero.debug("Nothing at all");
 	}
 }
+/** BEGIN TEST CASES **/
+var testCases = [
+	{
+		"type": "web",
+		"url": "https://www.courtlistener.com/opinion/2456202/valore-v-islamic-republic-of-iran/?q=&type=o&order_by=score%20desc&stat_Precedential=on&filed_after=01%2F01%2F2006&court=dcd%20almd%20alnd%20alsd%20akd%20azd%20ared%20arwd%20cacd%20caed%20cand%20casd%20cod%20ctd%20ded%20flmd%20flnd%20flsd%20gamd%20gand%20gasd%20hid%20idd%20ilcd%20ilnd%20ilsd%20innd%20insd%20iand%20iasd%20ksd%20kyed%20kywd%20laed%20lamd%20lawd%20med%20mdd%20mad%20mied%20miwd%20mnd%20msnd%20mssd%20moed%20mowd%20mtd%20ned%20nvd%20nhd%20njd%20nmd%20nyed%20nynd%20nysd%20nywd%20nced%20ncmd%20ncwd%20ndd%20ohnd%20ohsd%20oked%20oknd%20okwd%20ord%20paed%20pamd%20pawd%20rid%20scd%20sdd%20tned%20tnmd%20tnwd%20txed%20txnd%20txsd%20txwd%20utd%20vtd%20vaed%20vawd%20waed%20wawd%20wvnd%20wvsd%20wied%20wiwd%20wyd%20gud%20nmid%20prd%20vid%20californiad%20caca%20circtdel%20illinoised%20illinoisd%20indianad%20orld%20circtnc%20ohiod%20pennsylvaniad%20southcarolinaed%20southcarolinawd%20tennessed%20circttenn%20canalzoned",
+		"items": [
+			{
+				"itemType": "case",
+				"caseName": "Valore v. Islamic Republic of Iran",
+				"creators": [],
+				"dateDecided": "2010-03-31",
+				"court": "district.court",
+				"docketNumber": "03-cv-01959, 06-cv-00516, 06-cv-00750, 08-cv-01273",
+				"firstPage": "52",
+				"jurisdiction": "us:c0:dc.d",
+				"reporter": "F. Supp. 2d",
+				"reporterVolume": 700,
+				"shortTitle": "Valore",
+				"url": "https://www.courtlistener.com/opinion/2456202/valore-v-islamic-republic-of-iran/",
+				"attachments": [
+					{
+						"title": "CourtListener Snapshot",
+						"mimeType": "text/html",
+						"snapshot": true,
+						"css": "*{margin:0;padding:0;}div.mlz-outer{width: 60em;margin:0 auto;text-align:left;}body{text-align:center;}p{margin-top:0.75em;margin-bottom:0.75em;}div.mlz-link-button a{text-decoration:none;background:#cccccc;color:white;border-radius:1em;font-family:sans;padding:0.2em 0.8em 0.2em 0.8em;}div.mlz-link-button a:hover{background:#bbbbbb;}div.mlz-link-button{margin: 0.7em 0 0.8em 0;}pre.inline{white-space:pre;display:inline;}span.citation{white-space:pre;}",
+						"elementID": "opinion-content"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.courtlistener.com/opinion/2360732/in-re-search-of-certain-cell-phones/?q=&type=o&order_by=score%20desc&case_name=cell%20phone&stat_Precedential=on&filed_after=01%2F01%2F2006&court=dcd",
+		"items": [
+			{
+				"itemType": "case",
+				"caseName": "In Re Search of Certain Cell Phones",
+				"creators": [],
+				"dateDecided": "2008-03-04",
+				"court": "district.court",
+				"docketNumber": "08-cr-00174, 08-cr-00175, 08-cr-00176, 08-cr-00177",
+				"firstPage": "1",
+				"jurisdiction": "us:c0:dc.d",
+				"reporter": "F. Supp. 2d",
+				"reporterVolume": 541,
+				"url": "https://www.courtlistener.com/opinion/2360732/in-re-search-of-certain-cell-phones/",
+				"attachments": [
+					{
+						"title": "CourtListener Snapshot",
+						"mimeType": "text/html",
+						"snapshot": true,
+						"css": "*{margin:0;padding:0;}div.mlz-outer{width: 60em;margin:0 auto;text-align:left;}body{text-align:center;}p{margin-top:0.75em;margin-bottom:0.75em;}div.mlz-link-button a{text-decoration:none;background:#cccccc;color:white;border-radius:1em;font-family:sans;padding:0.2em 0.8em 0.2em 0.8em;}div.mlz-link-button a:hover{background:#bbbbbb;}div.mlz-link-button{margin: 0.7em 0 0.8em 0;}pre.inline{white-space:pre;display:inline;}span.citation{white-space:pre;}",
+						"elementID": "opinion-content"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.courtlistener.com/opinion/4456832/antoon-v-securus-technologies-inc/?q=flynn&type=o&order_by=score%20desc&stat_Precedential=on&stat_Non-Precedential=on&stat_Errata=on&stat_Separate%20Opinion=on&stat_In-chambers=on&stat_Relating-to%20orders=on&stat_Unknown%20Status=on&filed_after=08%2F31%2F2017&filed_before=03%2F08%2F2018&court=dcd",
+		"items": [
+			{
+				"itemType": "case",
+				"caseName": "Antoon v. Securus Technologies, Inc.",
+				"creators": [],
+				"dateDecided": "2018-01-03",
+				"court": "district.court",
+				"docketNumber": "17-mc-01892",
+				"jurisdiction": "us:c0:dc.d",
+				"shortTitle": "Antoon",
+				"url": "https://www.courtlistener.com/opinion/4456832/antoon-v-securus-technologies-inc/",
+				"attachments": [
+					{
+						"title": "CourtListener Snapshot",
+						"mimeType": "text/html",
+						"snapshot": true,
+						"css": "*{margin:0;padding:0;}div.mlz-outer{width: 60em;margin:0 auto;text-align:left;}body{text-align:center;}p{margin-top:0.75em;margin-bottom:0.75em;}div.mlz-link-button a{text-decoration:none;background:#cccccc;color:white;border-radius:1em;font-family:sans;padding:0.2em 0.8em 0.2em 0.8em;}div.mlz-link-button a:hover{background:#bbbbbb;}div.mlz-link-button{margin: 0.7em 0 0.8em 0;}pre.inline{white-space:pre;display:inline;}span.citation{white-space:pre;}",
+						"elementID": "opinion-content"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.courtlistener.com/opinion/2375881/flynn-v-doyle/?q=flynn&type=o&order_by=score%20desc&stat_Precedential=on&stat_Non-Precedential=on&stat_Errata=on&stat_Separate%20Opinion=on&stat_In-chambers=on&stat_Relating-to%20orders=on&stat_Unknown%20Status=on&filed_after=01%2F01%2F2006&court=wied",
+		"items": [
+			{
+				"itemType": "case",
+				"caseName": "Flynn v. Doyle",
+				"creators": [],
+				"dateDecided": "2009-04-24",
+				"court": "district.court",
+				"docketNumber": "06-cv-00537",
+				"firstPage": "987",
+				"jurisdiction": "us:c7:wi.ed",
+				"reporter": "F. Supp. 2d",
+				"reporterVolume": 630,
+				"shortTitle": "Flynn",
+				"url": "https://www.courtlistener.com/opinion/2375881/flynn-v-doyle/",
+				"attachments": [
+					{
+						"title": "CourtListener Snapshot",
+						"mimeType": "text/html",
+						"snapshot": true,
+						"css": "*{margin:0;padding:0;}div.mlz-outer{width: 60em;margin:0 auto;text-align:left;}body{text-align:center;}p{margin-top:0.75em;margin-bottom:0.75em;}div.mlz-link-button a{text-decoration:none;background:#cccccc;color:white;border-radius:1em;font-family:sans;padding:0.2em 0.8em 0.2em 0.8em;}div.mlz-link-button a:hover{background:#bbbbbb;}div.mlz-link-button{margin: 0.7em 0 0.8em 0;}pre.inline{white-space:pre;display:inline;}span.citation{white-space:pre;}",
+						"elementID": "opinion-content"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	}
+]
+/** END TEST CASES **/
