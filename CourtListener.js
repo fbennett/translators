@@ -8,8 +8,8 @@
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
-	"browserSupport": "g",
-	"lastUpdated": "2021-01-01 14:26:56"
+	"browserSupport": "gc",
+	"lastUpdated": "2021-01-04 16:49:50"
 }
 
 var codeMap = {
@@ -455,7 +455,6 @@ var citeTypes = [
 var procSegments = [
 	"cluster",
 	"docket",
-	"court",
 	"audio"
 ]
 
@@ -529,11 +528,16 @@ function fixDocketNumber(item) {
 			str = item.docketNumber.replace(/^[0-9]:/, "");
 		}
 		return str;
+	} else if (item.court === "bankruptcy.court") {
+		// Bankruptcy cases seem not to have a case type ID
+		// in Pacer ... ?
+		return item.docketNumber;
 	}
 	// Fix docket numbers on federal trial and appellate cases
 	if (item.jurisdiction.match(/^us:c[0-9]/)) {
 		var docnos = item.docketNumber.split(/,\s+/);
 		var label = null;
+		// This obviously won't happen now (see above)
 		if (item.court === "bankruptcy.court") {
 			label = "bk";
 		}
@@ -600,21 +604,15 @@ var proc = {
 		}
 	},
 	docket: {
-		setData: function(item, obj) {
+		setData: function(item, obj, doc) {
 			// Zotero.debug("proc: docket");
 			item.docketNumber = obj.docket_number;
 			item.caseName = fixTitle(obj.case_name);
 			item.shortTitle = fixTitle(obj.case_name_short);
 			item.filingDate = obj.date_filed;
-		},
-		setURLs: function(item, obj) {
-			urls.court = [obj.court + "?fields=resource_uri"];
-		}
-	},
-	court: {
-		setData: function(item, obj) {
+			
 			// Zotero.debug("proc: court");
-			var flp_code = obj.resource_uri.replace(/^.*?\/([^\/]*)\/*$/, "$1")
+			var flp_code = obj.court.replace(/^.*?\/([^\/]*)\/*$/, "$1")
 			if (codeMap[flp_code]) {
 				var codeSplit = codeMap[flp_code].split(";")
 				item.jurisdiction = codeSplit[0];
@@ -623,12 +621,54 @@ var proc = {
 				item.jurisdiction = flp_code;
 			}
 			item.docketNumber = fixDocketNumber(item);
+			if (item.jurisdiction === "us:il" && item.court === "appellate.court") {
+				if (item.docketNumber) {
+					var m = item.docketNumber.match(/^([0-9])-/);
+					if (m) {
+						item.jurisdiction = `${item.jurisdiction}:d${m[1]}`;
+					}
+				}
+			}
+			if (item.jurisdiction === "us:oh" && item.court === "court.appeals") {
+				var contentNodes = ZU.xpath(doc, '//div[@id="opinion-content"]');
+				if (contentNodes) {
+					var txt = contentNodes[0].textContent;
+					var divisions = [
+						"first",
+						"second",
+						"third",
+						"fourth",
+						"fifth",
+						"sixth",
+						"seventh",
+						"eighth",
+						"ninth",
+						"tenth",
+						"eleventh",
+						"twelfth"
+					]
+					var rex = new RegExp(`(${divisions.join("|")})`, "i");
+					var m = txt.match(rex);
+					if (m) {
+						var division = divisions.indexOf(m[1].toLowerCase()) + 1;
+						item.jurisdiction = `${item.jurisdiction}:d${division}`;
+					}
+				}
+			}
 		},
 		setURLs: function(item, obj) {
-			var flp_code = obj.resource_uri.replace(/^.*?\/([^\/]*)\/*$/, "$1");
+			var flp_code = obj.court.replace(/^.*?\/([^\/]*)\/*$/, "$1");
 			urls.audio = [];
-			if (item.docketNumber && flp_code) {
-				urls.audio.push('https://www.courtlistener.com/api/rest/v3/search/?type=oa&docket_number=' + item.docketNumber + '&court=' + flp_code);
+			// Insert warnings
+			if (item.docketNumber) {
+				var docketNumber = item.docketNumber;
+				if (item.court === "bankruptcy.court") {
+					item.caseName = `[CHECK AGAINST PAGE VIEW] ${item.caseName}`;
+					item.docketNumber = `[CHECK AGAINST CASE REPORT] ${item.docketNumber}`
+				}
+				if (flp_code) {
+					urls.audio.push('https://www.courtlistener.com/api/rest/v3/search/?type=oa&docket_number=' + docketNumber + '&court=' + flp_code);
+				}
 			}
 		}
 	},
@@ -1052,15 +1092,16 @@ var testCases = [
 		"items": [
 			{
 				"itemType": "case",
-				"caseName": "In Re Rodgers",
+				"caseName": "[CHECK AGAINST PAGE VIEW] In Re Rodgers",
 				"creators": [],
 				"dateDecided": "2010-05-19",
 				"court": "bankruptcy.court",
-				"docketNumber": "09-bk-13886",
+				"docketNumber": "[CHECK AGAINST CASE REPORT] 9:09-bk-13886-ALP",
 				"firstPage": "910",
 				"jurisdiction": "us:c11:fl.md",
 				"reporter": "B.R.",
 				"reporterVolume": 430,
+				"shortTitle": "In Re Rodgers",
 				"url": "https://www.courtlistener.com/opinion/1522154/in-re-rodgers/",
 				"attachments": [
 					{
@@ -1082,15 +1123,16 @@ var testCases = [
 		"items": [
 			{
 				"itemType": "case",
-				"caseName": "James Merritt, Jr.",
+				"caseName": "[CHECK AGAINST PAGE VIEW] James Merritt, Jr.",
 				"creators": [],
 				"dateDecided": "2006-10-19",
 				"court": "bankruptcy.court",
-				"docketNumber": "17-bk-30699",
+				"docketNumber": "[CHECK AGAINST CASE REPORT] 17-30699",
 				"firstPage": "455",
 				"jurisdiction": "us:c5:tx.sd",
 				"reporter": "B.R.",
 				"reporterVolume": 354,
+				"shortTitle": "James Merritt, Jr.",
 				"url": "https://www.courtlistener.com/opinion/1816815/in-re-singletary/",
 				"attachments": [
 					{
@@ -1112,16 +1154,79 @@ var testCases = [
 		"items": [
 			{
 				"itemType": "case",
-				"caseName": "In Re Blanton Smith Corp.",
+				"caseName": "[CHECK AGAINST PAGE VIEW] In Re Blanton Smith Corp.",
 				"creators": [],
 				"dateDecided": "1980-11-26",
 				"court": "bankruptcy.court",
-				"docketNumber": "80-bk-01019, 80-bk-01020",
+				"docketNumber": "[CHECK AGAINST CASE REPORT] Bkrtcy. Nos. 380-01019, 380-01020",
 				"firstPage": "410",
 				"jurisdiction": "us:c6:tn.md",
 				"reporter": "B.R.",
 				"reporterVolume": 7,
+				"shortTitle": "In Re Blanton Smith Corp.",
 				"url": "https://www.courtlistener.com/opinion/1991450/in-re-blanton-smith-corp/",
+				"attachments": [
+					{
+						"mimeType": "text/html",
+						"snapshot": true,
+						"css": "*{margin:0;padding:0;}div.mlz-outer{width: 60em;margin:0 auto;text-align:left;}body{text-align:center;}p{margin-top:0.75em;margin-bottom:0.75em;}div.mlz-link-button a{text-decoration:none;background:#cccccc;color:white;border-radius:1em;font-family:sans;padding:0.2em 0.8em 0.2em 0.8em;}div.mlz-link-button a:hover{background:#bbbbbb;}div.mlz-link-button{margin: 0.7em 0 0.8em 0;}pre.inline{white-space:pre;display:inline;}span.citation{white-space:pre;}",
+						"elementID": "opinion-content"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.courtlistener.com/opinion/2088592/people-v-fuzz/?type=o&q=fuzz&type=o&order_by=score%20desc&stat_Precedential=on&court=illappct",
+		"items": [
+			{
+				"itemType": "case",
+				"caseName": "People v. Fuzz",
+				"creators": [],
+				"dateDecided": "1991-08-28",
+				"court": "appellate.court",
+				"docketNumber": "3-90-0896",
+				"extra": "Other cites: 218 Ill. App. 3d 418; 578 N.E.2d 294",
+				"firstPage": "167",
+				"jurisdiction": "us:il:d3",
+				"reporter": "Ill. Dec.",
+				"reporterVolume": 161,
+				"shortTitle": "Fuzz",
+				"url": "https://www.courtlistener.com/opinion/2088592/people-v-fuzz/",
+				"attachments": [
+					{
+						"mimeType": "text/html",
+						"snapshot": true,
+						"css": "*{margin:0;padding:0;}div.mlz-outer{width: 60em;margin:0 auto;text-align:left;}body{text-align:center;}p{margin-top:0.75em;margin-bottom:0.75em;}div.mlz-link-button a{text-decoration:none;background:#cccccc;color:white;border-radius:1em;font-family:sans;padding:0.2em 0.8em 0.2em 0.8em;}div.mlz-link-button a:hover{background:#bbbbbb;}div.mlz-link-button{margin: 0.7em 0 0.8em 0;}pre.inline{white-space:pre;display:inline;}span.citation{white-space:pre;}",
+						"elementID": "opinion-content"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.courtlistener.com/opinion/2698937/state-v-cline/?q=bucket&type=o&order_by=score%20desc&stat_Precedential=on&filed_after=01%2F01%2F2012&court=ohioctapp",
+		"items": [
+			{
+				"itemType": "case",
+				"caseName": "State v. Cline",
+				"creators": [],
+				"dateDecided": "2013-04-08",
+				"court": "court.appeals",
+				"docketNumber": "12 CA 11",
+				"firstPage": "1404",
+				"jurisdiction": "us:oh:d5",
+				"shortTitle": "Cline",
+				"url": "https://www.courtlistener.com/opinion/2698937/state-v-cline/",
+				"yearAsVolume": 2013,
 				"attachments": [
 					{
 						"mimeType": "text/html",
