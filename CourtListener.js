@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gc",
-	"lastUpdated": "2021-01-04 16:49:50"
+	"lastUpdated": "2021-01-04 22:44:44"
 }
 
 var codeMap = {
@@ -570,8 +570,9 @@ var proc = {
 	cluster: {
 		setData: function(item, obj) {
 			//Zotero.debug("proc: cluster");
-			
 			var firstCite = true;
+			item.caseName = fixTitle(obj.case_name);
+			item.shortTitle = fixTitle(obj.case_name_short);
 			var extras = [];
 			for (var i=0,ilen=obj.citations.length; i<ilen; i++) {
 				var citation = obj.citations[i];
@@ -607,8 +608,6 @@ var proc = {
 		setData: function(item, obj, doc) {
 			// Zotero.debug("proc: docket");
 			item.docketNumber = obj.docket_number;
-			item.caseName = fixTitle(obj.case_name);
-			item.shortTitle = fixTitle(obj.case_name_short);
 			item.filingDate = obj.date_filed;
 			
 			// Zotero.debug("proc: court");
@@ -663,7 +662,6 @@ var proc = {
 			if (item.docketNumber) {
 				var docketNumber = item.docketNumber;
 				if (item.court === "bankruptcy.court") {
-					item.caseName = `[CHECK AGAINST PAGE VIEW] ${item.caseName}`;
 					item.docketNumber = `[CHECK AGAINST CASE REPORT] ${item.docketNumber}`
 				}
 				if (flp_code) {
@@ -745,7 +743,7 @@ function scrapeCase(doc, url) {
 		elementID: "opinion-content"
 	});
 	item.url = url.replace(/\?.*/, '');
-	urls.cluster = ['https://www.courtlistener.com/api/rest/v3/clusters/' + num + "/?fields=docket,sub_opinions,date_filed,citations"];
+	urls.cluster = ['https://www.courtlistener.com/api/rest/v3/clusters/' + num + "/?fields=docket,sub_opinions,date_filed,citations,case_name,case_name_short"];
 	runURLs(0, 0, item, doc);
 }
 
@@ -1092,7 +1090,7 @@ var testCases = [
 		"items": [
 			{
 				"itemType": "case",
-				"caseName": "[CHECK AGAINST PAGE VIEW] In Re Rodgers",
+				"caseName": "In Re Rodgers",
 				"creators": [],
 				"dateDecided": "2010-05-19",
 				"court": "bankruptcy.court",
@@ -1101,7 +1099,6 @@ var testCases = [
 				"jurisdiction": "us:c11:fl.md",
 				"reporter": "B.R.",
 				"reporterVolume": 430,
-				"shortTitle": "In Re Rodgers",
 				"url": "https://www.courtlistener.com/opinion/1522154/in-re-rodgers/",
 				"attachments": [
 					{
@@ -1123,7 +1120,7 @@ var testCases = [
 		"items": [
 			{
 				"itemType": "case",
-				"caseName": "[CHECK AGAINST PAGE VIEW] James Merritt, Jr.",
+				"caseName": "In Re Singletary",
 				"creators": [],
 				"dateDecided": "2006-10-19",
 				"court": "bankruptcy.court",
@@ -1132,7 +1129,6 @@ var testCases = [
 				"jurisdiction": "us:c5:tx.sd",
 				"reporter": "B.R.",
 				"reporterVolume": 354,
-				"shortTitle": "James Merritt, Jr.",
 				"url": "https://www.courtlistener.com/opinion/1816815/in-re-singletary/",
 				"attachments": [
 					{
