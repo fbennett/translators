@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2021-02-06 15:43:59"
+	"lastUpdated": "2021-02-18 15:34:33"
 }
 
 /*
@@ -54,101 +54,209 @@ function detectWeb(doc, url) {
 
 
 function scrape(doc, url) {
-	var newItem = new Zotero.Item("case");
+	items = [];
+	
 	var voliss = doc.getElementsByClassName('documentMeta-citation')[0].nextElementSibling;
 	voliss = ZU.trimInternal(
 		ZU.xpathText(voliss, './node()[not(self::script)]', null, '') // We technically only use ./text() parts, but this is less confusing
 	);
-	// e.g. Reference re Secession of Quebec, 1998 CanLII 793 (SCC), [1998] 2 SCR 217, <http://canlii.ca/t/1fqr3>, retrieved on 2019-11-25
-	var citationParts = voliss.split(',');
-	newItem.caseName = citationParts[0];
-	
+	var otherCitation = ZU.xpathText(doc, '//div[@id="documentMeta"]//div[contains(text(), "Other citations") or contains(text(), "Autres citations") or contains(text(), "Other citation") or contains(text(), "Autre citation")]/following-sibling::div');
+	if (checkneutral(voliss)) {
+		items.push(createneutral(voliss,voliss,doc,url));
+	}
+	else if (otherCitation && checkneutral2(otherCitation)) {
+		items.push(createneutral2(voliss,otherCitation,doc,url));
+	}
+	else if (checkreporter1(voliss)) {
+		items.push(createreporter1(voliss,voliss,doc,url));
+		items.push(createcanlii(voliss,voliss,doc,url));
+	}
+
+	else if (checkreporter2(voliss)) {
+		items.push(createreporter2(voliss,voliss,doc,url));
+		items.push(createcanlii(voliss,voliss,doc,url));
+	}
+
+	else if (checkreporter3(voliss)) {
+		items.push(createreporter3(voliss,doc,url));
+		items.push(createcanlii(voliss,voliss,doc,url));
+	}
+
+	else if (checkcanlii(voliss)) {
+		items.push(createcanlii(voliss,voliss,doc,url));
+		
+		if (checkreporter1(otherCitation)) {
+			items.push(createreporter1(otherCitation,voliss,doc,url));
+		}
+		else if (checkreporter2(otherCitation)) {
+			items.push(createreporter2(otherCitation,voliss,doc,url));
+
+		}
+		else if (checkreporter3(otherCitation)) {
+			items.push(createreporter3(otherCitation,voliss,doc,url));
+		}
+	}
+	createrelationship(items);
+	completeitems(items);
+}
+
+
+function checkneutral(voliss) {
 	// Test for neutral citation
 	// Suttie c. Canada (Procureur Général), 2011 CF 119
-	var neutralTest = voliss;
-	var neutralRegex = /(\d\d\d\d+)\s+([A-Z]+)\s+(\d+)\s+\(CanLII\)/;
-	var neutralDetails = neutralTest.match(neutralRegex);
+	var Test = voliss;
+	var Regex = /(\d\d\d\d+)\s+([A-Z]+)\s+(\d+)\s+\(CanLII\)/;
+	var Details = Test.match(Regex);
+	return Details;
+}
 
-	// CanLII information
-	// R. v. Adams, 1995 CanLII 56 (SCC)
-	var CanLIITest = voliss;
-	var CanLIIRegex = /(\d\d\d\d+)\s+(CanLII)\s+(\d+)/;
-	var CanLIIDetails = CanLIITest.match(CanLIIRegex);
+function checkneutral2(voliss) {
+	// Test for neutral citation
+	// Suttie c. Canada (Procureur Général), 2011 CF 119
+	var Test = voliss;
+	var Regex = /(\d\d\d\d+)\s+([A-Z]+)\s+(\d+)/;
+	var Details = Test.match(Regex);
+	return Details;
+}
 
+function checkreporter1(voliss) {
 	// Test for [yyyy] 1 xxx 1
 	// R. v. Adams, [1995] 4 SCR 707
-	var reporterTest1 = voliss;
-	var reporter1Regex = /\[(\d\d\d\d)\]\s+(\d+)\s+([A-Z]+)\s+(\d+)/;
-	var reporter1Details = reporterTest1.match(reporter1Regex);
+	var Test = voliss;
+	var Regex = /\[(\d\d\d\d)\]\s+(\d+)\s+([A-Z]+)\s+(\d+)/;
+	var Details = Test.match(Regex);
+	return Details;
+}
 
+function checkreporter2(voliss) {
 	// Test for [yyyy] xxx 1
 	// Les Pétroles Inc. v. Tremblay et al., [1963] SCR 120
-	var reporterTest2 = voliss;
-	var reporter2Regex = /\[(\d\d\d\d)\]\s+([A-Z]+)\s+(\d+)/;
-	var reporter2Details = reporterTest2.match(reporter2Regex);
+	var Test = voliss;
+	var Regex = /\[(\d\d\d\d)\]\s+([A-Z]+)\s+(\d+)/;
+	var Details = Test.match(Regex);
+	return Details;
+}
 
-	if (neutralDetails) {
-		newItem.yearAsVolume = neutralDetails[1];
-		newItem.firstPage = neutralDetails[3];
-	}
-	
-	else if (reporter1Details) {
-		newItem.yearAsVolume = reporter1Details[1];
-		newItem.reporterVolume = reporter1Details[2];
-		newItem.reporter = reporter1Details[3];
-		newItem.firstPage = reporter1Details[4];
-		newItem.filingDate = CanLIIDetails[1];
-		newItem.archive = CanLIIDetails[2];
-		newItem.archiveLocation = CanLIIDetails[3];
-	}
-	
-	else if (reporter2Details) {
-		newItem.yearAsVolume = reporter2Details[1];
-		newItem.reporter = reporter2Details[2];
-		newItem.firstPage = reporter2Details[3];
-		newItem.filingDate = CanLIIDetails[1];
-		newItem.archive = CanLIIDetails[2];
-		newItem.archiveLocation = CanLIIDetails[3];
+function checkreporter3(voliss) {
+	// Test for 12 xxx (1th) 123
+	// R. v. J.R.B., 24 CR (4th) 184
+	var Test = voliss;
+	var Regex = /(\d+)\s+([A-Z]+)\s+\((\d+)(?:\w+)\)\s(\d+)/;
+	var Details = Test.match(Regex);
+	return Details;
+}
+
+function checkcanlii(voliss) {
+	// CanLII information
+	// R. v. Adams, 1995 CanLII 56 (SCC)
+	var Test = voliss;
+	var Regex = /(\d\d\d\d+)\s+(CanLII)\s+(\d+)/;
+	var Details = Test.match(Regex);
+	return Details;
+}
+
+function neutralreference(newItem, details) {
+	newItem.yearAsVolume = details[1];
+	newItem.firstPage = details[3];
+}
+
+function reporter1reference(newItem,details) {
+	newItem.yearAsVolume = details[1];
+	newItem.reporterVolume = details[2];
+	newItem.reporter = details[3];
+	newItem.firstPage = details[4];
+}
+
+function reporter2reference(newItem,details) {
+	newItem.yearAsVolume = details[1];
+	newItem.reporter = details[2];
+	newItem.firstPage = details[3];
+}
+
+function reporter3reference(newItem,details) {
+	newItem.reporterVolume = details[1];
+	newItem.reporter = details[2];
+	newItem.issue = details[3];
+	newItem.firstPage = details[4];
+}
+
+function canliireference(newItem, details) {
+	newItem.yearAsVolume = details[1];
+	newItem.reporter = details[2];
+	newItem.firstPage = details[3];
+}
+
+function createneutral(voliss1,voliss2,doc,url) {
+	var neutral = new Zotero.Item("case");
+	var neutralDetails = checkneutral(voliss2);
+	neutralreference(neutral, neutralDetails);
+	othervalues(doc, url, neutral, voliss1);
+	return neutral;
+}
+
+function createneutral2(voliss1,voliss2,doc,url) {
+	var neutral = new Zotero.Item("case");
+	var neutralDetails = checkneutral2(voliss2);
+	neutralreference(neutral, neutralDetails);
+	othervalues(doc, url, neutral, voliss1);
+	return neutral;
+}
+
+function createreporter1(voliss1,voliss2,doc,url) {
+	var reporter1 = new Zotero.Item("case");
+	var reporter1Details = checkreporter1(voliss1);
+	reporter1reference(reporter1, reporter1Details);
+	othervalues(doc, url, reporter1, voliss2);
+	return reporter1;
+}
+
+function createreporter2(voliss1,voliss2,doc,url) {
+	var reporter2 = new Zotero.Item("case");
+	var reporter2Details = checkreporter2(voliss1);
+	reporter2reference(reporter2, reporter2Details);
+	othervalues(doc, url, reporter2, voliss2);
+	return reporter2;
+}
+
+function createreporter3(voliss1,voliss2,doc,url) {
+	var reporter3 = new Zotero.Item("case");
+	var reporter3Details = checkreporter3(voliss1);
+	reporter3reference(reporter3, reporter3Details);
+	othervalues(doc, url, reporter3, voliss2);
+	return reporter3;
+}
+
+function createcanlii(voliss1,voliss2,doc,url) {
+	var canlii = new Zotero.Item("case");
+	var canliiDetails = checkcanlii(voliss1);
+	canliireference(canlii, canliiDetails);
+	othervalues(doc, url, canlii, voliss2);
+	return canlii;
+}
+
+function createrelationship(items) {
+	var items, i, ilen, j, jlen;
+ 
+	// Assign a bogus itemID to each item in the set
+	for (i = 0, ilen = items.length; i < ilen; i += 1) {
+		items[i].itemID = "" + i;
 	}
 
-	else if (CanLIIDetails) {
-		newItem.filingDate = CanLIIDetails[1];
-		newItem.archive = CanLIIDetails[2];
-		newItem.archiveLocation = CanLIIDetails[3];
-		
-		var otherCitation = ZU.xpathText(doc, '//div[@id="documentMeta"]//div[contains(text(), "Other citations") or contains(text(), "Autres citations") or contains(text(), "Other citation") or contains(text(), "Autre citation")]/following-sibling::div');
-		
-		var neutralTest2 = otherCitation;
-		var neutralRegex2 = /(\d\d\d\d)\s+([A-Z]+)\s+(\d+)/;
-		var neutralDetails2 = neutralTest2.match(neutralRegex2);
-
-		var reporterTest3 = otherCitation;
-		var reporter3Regex = /\[(\d\d\d\d)\]\s+(\d+)\s+([A-Z]+)\s+(\d+)/;
-		var reporter3Details = reporterTest3.match(reporter3Regex);
-		
-		var reporterTest4 = otherCitation;
-		var reporter4Regex = /\[(\d\d\d\d)\]\s+([A-Z]+)\s+(\d+)/;
-		var reporter4Details = reporterTest4.match(reporter4Regex);
-		
-		if (neutralDetails2) {
-			newItem.yearAsVolume = neutralDetails2[1];
-			newItem.firstPage = neutralDetails2[3];
+	// Set bogus itemIDs in each item's seeAlso
+	// field (skipping the item's own ID)
+	for (i = 0, ilen = items.length; i < ilen; i += 1) {
+		for (j = 0, jlen = items.length; j < jlen; j += 1) {
+			if (i === j) {
+				continue;
+			}
+			items[i].seeAlso.push("" + j);
 		}
-		
-		else if (reporter3Details) {
-			newItem.yearAsVolume = reporter3Details[1];
-			newItem.reporterVolume = reporter3Details[2];
-			newItem.reporter = reporter3Details[3];
-			newItem.firstPage = reporter3Details[4];
-		}
-		
-		else if (reporter4Details) {
-			newItem.yearAsVolume = reporter4Details[1];
-			newItem.reporter = reporter4Details[2];
-			newItem.firstPage = reporter4Details[3];
-		}
 	}
+}
 
+function othervalues(doc, url, newItem, voliss) {
+	var citationParts = voliss.split(',');
+	newItem.caseName = citationParts[0];
 	var provinceRegex = /https?:\/\/(?:www\.)?canlii\.org[^/]*\/(?:en|fr)\/([^/]+)\/[^/]+\/doc\/.+/;
 	var provinceURL = url;
 	var provinceDetails = provinceURL.match(provinceRegex);
@@ -186,7 +294,13 @@ function scrape(doc, url) {
 		document: doc,
 		title: "CanLII Snapshot"
 	});
-	newItem.complete();
+}
+
+function completeitems(items) {
+	// Save the items
+	for (i = 0, ilen = items.length; i < ilen; i += 1) {
+		items[i].complete();
+	}	
 }
 
 function doWeb(doc, url) {
@@ -206,9 +320,7 @@ function doWeb(doc, url) {
 			ZU.processDocuments(articles, scrape);
 		});
 	}
-}
-
-/** BEGIN TEST CASES **/
+}/** BEGIN TEST CASES **/
 var testCases = [
 	{
 		"type": "web",
@@ -391,11 +503,9 @@ var testCases = [
 				"caseName": "Les Pétroles Inc. v. Tremblay et al.",
 				"creators": [],
 				"dateDecided": "1962-12-17",
-				"archive": "CanLII",
-				"archiveLocation": "93",
 				"court": "Supreme Court of Canada",
-				"filingDate": "1962",
 				"firstPage": "120",
+				"itemID": "0",
 				"jurisdiction": "ca",
 				"language": "en",
 				"reporter": "SCR",
@@ -413,7 +523,38 @@ var testCases = [
 				],
 				"tags": [],
 				"notes": [],
-				"seeAlso": []
+				"seeAlso": [
+					"1"
+				]
+			},
+			{
+				"itemType": "case",
+				"caseName": "Les Pétroles Inc. v. Tremblay et al.",
+				"creators": [],
+				"dateDecided": "1962-12-17",
+				"court": "Supreme Court of Canada",
+				"firstPage": "93",
+				"itemID": "1",
+				"jurisdiction": "ca",
+				"language": "en",
+				"reporter": "CanLII",
+				"url": "https://canlii.ca/t/22vwz",
+				"yearAsVolume": "1962",
+				"attachments": [
+					{
+						"title": "CanLII Full Text PDF",
+						"mimeType": "application/pdf"
+					},
+					{
+						"title": "CanLII Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": [
+					"0"
+				]
 			}
 		]
 	},
@@ -426,11 +567,42 @@ var testCases = [
 				"caseName": "R. v. Charron",
 				"creators": [],
 				"dateDecided": "1980-05-20",
-				"archive": "CanLII",
-				"archiveLocation": "3033",
 				"court": "Provincial Court",
-				"filingDate": "1980",
+				"firstPage": "3033",
+				"itemID": "0",
+				"jurisdiction": "ca:ab",
+				"language": "en",
+				"reporter": "CanLII",
+				"url": "https://canlii.ca/t/gb9v0",
+				"yearAsVolume": "1980",
+				"attachments": [
+					{
+						"title": "CanLII Full Text PDF",
+						"mimeType": "application/pdf"
+					},
+					{
+						"title": "CanLII Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [],
+				"notes": [
+					{
+						"note": "Other Citations: [1980] 5 WWR 573 — 17 CR (3d) 187"
+					}
+				],
+				"seeAlso": [
+					"1"
+				]
+			},
+			{
+				"itemType": "case",
+				"caseName": "R. v. Charron",
+				"creators": [],
+				"dateDecided": "1980-05-20",
+				"court": "Provincial Court",
 				"firstPage": "573",
+				"itemID": "1",
 				"jurisdiction": "ca:ab",
 				"language": "en",
 				"reporter": "WWR",
@@ -453,7 +625,9 @@ var testCases = [
 						"note": "Other Citations: [1980] 5 WWR 573 — 17 CR (3d) 187"
 					}
 				],
-				"seeAlso": []
+				"seeAlso": [
+					"0"
+				]
 			}
 		]
 	},
@@ -466,12 +640,10 @@ var testCases = [
 				"caseName": "Loranc Alkhouri c Bureau de LA Sécurité Privée",
 				"creators": [],
 				"dateDecided": "2020-06-10",
-				"archive": "CanLII",
-				"archiveLocation": "41352",
 				"court": "Tribunal administratif du Québec",
 				"docketNumber": "SAE-Q-243775-1909",
-				"filingDate": "2020",
 				"firstPage": "0683",
+				"itemID": "0",
 				"jurisdiction": "ca:qc",
 				"language": "fr",
 				"url": "https://canlii.ca/t/j8cl4",
@@ -489,6 +661,81 @@ var testCases = [
 				"tags": [],
 				"notes": [],
 				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/en/ca/scc/doc/1996/1996canlii191/1996canlii191.html",
+		"items": [
+			{
+				"itemType": "case",
+				"caseName": "Gordon v. Goertz",
+				"creators": [],
+				"dateDecided": "1996-05-02",
+				"court": "Supreme Court of Canada",
+				"docketNumber": "24622",
+				"firstPage": "27",
+				"itemID": "0",
+				"jurisdiction": "ca",
+				"language": "en",
+				"reporter": "SCR",
+				"reporterVolume": "2",
+				"url": "https://canlii.ca/t/1fr99",
+				"yearAsVolume": "1996",
+				"attachments": [
+					{
+						"title": "CanLII Full Text PDF",
+						"mimeType": "application/pdf"
+					},
+					{
+						"title": "CanLII Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [],
+				"notes": [
+					{
+						"note": "Other Citations: 134 DLR (4th) 321 — 196 NR 321 — 114 WAC 241 — [1996] 5 WWR 457 — 141 Sask R 241 — 19 RFL (4th) 177 — AZ-96111061 — [1996] CarswellSask 199 — EYB 1996-30431 — JE 96-959 — [1996] SCJ No 52 (QL) — [1996] ACS no 52 — [1996] RDF 209 — 62 ACWS (3d) 737"
+					}
+				],
+				"seeAlso": [
+					"1"
+				]
+			},
+			{
+				"itemType": "case",
+				"caseName": "Gordon v. Goertz",
+				"creators": [],
+				"dateDecided": "1996-05-02",
+				"court": "Supreme Court of Canada",
+				"docketNumber": "24622",
+				"firstPage": "191",
+				"itemID": "1",
+				"jurisdiction": "ca",
+				"language": "en",
+				"reporter": "CanLII",
+				"url": "https://canlii.ca/t/1fr99",
+				"yearAsVolume": "1996",
+				"attachments": [
+					{
+						"title": "CanLII Full Text PDF",
+						"mimeType": "application/pdf"
+					},
+					{
+						"title": "CanLII Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [],
+				"notes": [
+					{
+						"note": "Other Citations: 134 DLR (4th) 321 — 196 NR 321 — 114 WAC 241 — [1996] 5 WWR 457 — 141 Sask R 241 — 19 RFL (4th) 177 — AZ-96111061 — [1996] CarswellSask 199 — EYB 1996-30431 — JE 96-959 — [1996] SCJ No 52 (QL) — [1996] ACS no 52 — [1996] RDF 209 — 62 ACWS (3d) 737"
+					}
+				],
+				"seeAlso": [
+					"0"
+				]
 			}
 		]
 	}
