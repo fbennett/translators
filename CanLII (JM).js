@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2021-02-18 15:34:33"
+	"lastUpdated": "2021-02-23 16:12:42"
 }
 
 /*
@@ -33,6 +33,584 @@
 
 // attr()/text() v2
 // eslint-disable-next-line
+
+var courtsDict = {
+	"ca": {
+		language: {
+			"en": {
+				court: {
+					"Supreme Court of Canada": {
+						LRRName: "supreme.court",
+						start: "2000-01-01",
+					},
+					"Supreme Court of Canada - Applications for Leave": {
+						LRRName: "supreme.court",
+						start: ""
+					},
+					"Judicial Committee of the Privy Council - Canadian cases": {
+						foreign: true
+					},
+					"Federal Court of Appeal": {
+						LRRName: "federal.court.appeal",
+						start: "2001-02-01",
+					},
+					"Federal Court": {
+						LRRName: "federal.court",
+						start: "2001-02-01",
+					},
+					"Tax Court of Canada": {
+						LRRName: "tax.court",
+						start: "2003-01-01",
+					},
+					"Court Martial Appeal Court of Canada": {
+						LRRName: "court.martial.appeal.court",
+						start: "2001-10-01",
+					},
+					"Courts Martial": {
+						LRRName: "courts.martial",
+						start: "",
+					},
+					"Foreign reported decisions":{
+						foreign: true
+					}
+				}
+			},
+			"fr": {
+				court: {
+					"Cour suprême du Canada": {
+						LRRName: "supreme.court",
+						start: "2000-01-01",
+					},
+					"Cour suprême du Canada - demandes d'autorisation": {
+						LRRName: "supreme.court",
+						start: ""
+					},
+					"Comité judiciaire du Conseil privé - affaires canadiennes": {
+						foreign: true
+					},
+					"Cour d'appel fédérale": {
+						LRRName: "federal.court.appeal",
+						start: "2001-02-01",
+					},
+					"Cour fédérale": {
+						LRRName: "federal.court",
+						start: "2001-02-01",
+					},
+					"Cour canadienne de l'impôt": {
+						LRRName: "tax.court",
+						start: "2003-01-01",
+					},
+					"Cour d'appel de la cour martiale du Canada": {
+						LRRName: "court.martial.appeal.court",
+						start: "2001-10-01",
+					},
+					"Cours martiales": {
+						LRRName: "courts.martial",
+						start: "",
+					},
+					"Décisions rapportées à l'étranger":{
+						foreign: true
+					}
+				}
+			}
+		}
+	},
+	"ca:ab": {
+		language: {
+			"en": {
+				court: {
+					"Court of Appeal": {
+						LRRName: "court.appeal",
+						start: "1998-01-01"
+					},
+					"Court of Queen's Bench": {
+						LRRName: "court.queens.bench",
+						start: "1998-01-01"
+					},
+					"Provincial Court": {
+						LRRName: "provincial.court",
+						start: "1998.01-01"
+					}
+				}
+			},
+			"fr": {
+				court: {
+					"Cour d'appel": {
+						LRRName: "court.appeal",
+						start: "1998-01-01"
+					},
+					"Cour du banc de la Reine": {
+						LRRName: "court.queens.bench",
+						start: "1998-01-01"
+					},
+					"Cour provinciale": {
+						LRRName: "provincial.court",
+						start: "1998.01-01"
+					}
+				}
+			}
+		}
+	},
+	"ca:bc": {
+		language: {
+			"en": {
+				court: {
+					"Court of Appeal": {
+						LRRName: "court.appeal",
+						start: "1999-01-01"
+					},
+					"Supreme Court of British Columbia": {
+						LRRName: "supreme.court.prov",
+						start: "2000-01-01"
+					},
+					"Provincial Court of British Columbia": {
+						LRRName: "provincial.court",
+						start: "1999-02-01"
+					}
+				}
+			}
+		}
+	},
+	"ca:mb": {
+		language: {
+			"en": {
+				court: {
+					"Court of Appeal": {
+						LRRName: "court.appeal",
+						start: "2000-03-01"
+					},
+					"Court of Queen's Bench of Manitoba": {
+						LRRName: "court.queens.bench",
+						start: "2000-04-01"
+					},
+					"Provincial Court of Manitoba": {
+						LRRName: "provincial.court",
+						start: "2007-01-01"
+					}
+				}
+			},
+			"fr": {
+				court: {
+					"Cour d'appel": {
+						LRRName: "court.appeal",
+						start: "2000-03-01"
+					},
+					"Cour du Banc de la Reine du Manitoba": {
+						LRRName: "court.queens.bench",
+						start: "2000-04-01"
+					},
+					"Cour provinciale du Manitoba": {
+						LRRName: "provincial.court",
+						start: "2007-01-01"
+					}
+				}
+			}
+		}
+	},
+	"ca:nb": {
+		language: {
+			"en": {
+				court: {
+					"Court of Appeal of New Brunswick": {
+						LRRName: "court.appeal",
+						start: "2001-05-01"
+					},
+					"Court of Queen's Bench of New Brunswick": {
+						LRRName: "court.queens.bench",
+						start: "2002-01-01"
+					},
+					"Provincial Court": {
+						LRRName: "provincial.court",
+						start: "2002-12-01"
+					}
+				}
+			},
+			"fr": {
+				court: {
+					"Cour d'appel du Nouveau-Brunswick": {
+						LRRName: "court.appeal",
+						start: "2001-05-01"
+					},
+					"Cour du Banc de la Reine du Nouveau-Brunswick": {
+						LRRName: "court.queens.bench",
+						start: "2002-01-01"
+					},
+					"Cour provinciale": {
+						LRRName: "provincial.court",
+						start: "2002-12-01"
+					}
+				}
+			}
+		}
+	},
+	"ca:nl": {
+		language: {
+			"en": {
+				court: {
+					"Court of Appeal of Newfoundland and Labrador": {
+						LRRName: "court.appeal",
+						start: "2002-10-01"
+					},
+					"Supreme Court of Newfoundland and Labrador":{
+						LRRName: "supreme.court.prov",
+						start: "2018-01-01"
+					},
+					"Provincial Court of Newfoundland and Labrador": {
+						LRRName: "provincial.court",
+						start: ""
+					}
+				}
+			}
+		}
+	},
+	"ca:ns": {
+		language: {
+			"en": {
+				court: {
+					"Nova Scotia Court of Appeal": {
+						LRRName: "court.appeal",
+						start: "1999-09-01"
+					},
+					"Supreme Court of Nova Scotia": {
+						LRRName: "supreme.court.prov",
+						start: "2000-12-01"
+					},
+					"Supreme Court of Nova Scotia (Family Division)": {
+						LRRName: "supreme.court.family",
+						start: "2000-12-01"
+					},
+					"Provincial Court of Nova Scotia": {
+						LRRName: "provincial.court",
+						start: "2001-03-01"
+					},
+					"Small Claims Court": {
+						LRRName: "small.claims.court",
+						start: "2000-01-01"
+					},
+					"Nova Scotia Probate Court": {
+						LRRName: "probate.court",
+						start: "2001-03-01"
+					},
+					"Nova Scotia Family Court": {
+						LRRName: "family.court",
+						start: "2001-01-01"
+					}
+				}
+			}
+		}
+	},
+	"ca:nt": {
+		language: {
+			"en": {
+				court: {
+					"Court of Appeal for the Northwest Territories": {
+						LRRName: "court.appeal",
+						start: "1999-12-01"
+					},
+					"Supreme Court of the Northwest Territories": {
+						LRRName: "supreme.court.prov",
+						start: "1999-10-01"
+					},
+					"Territorial Court of the Northwest Territories": {
+						LRRName: "territorial.court",
+						start: "1999-10-01"
+					},
+					"Youth Justice Court": {
+						LRRName: "territorial.court",
+						start: "1999-10-01"
+					}
+				}
+			},
+			"fr": {
+				court: {
+					"Cour d'appel des Territoires du Nord-Ouest": {
+						LRRName: "court.appeal",
+						start: "1999-12-01"
+					},
+					"Cour suprême des Territoires du Nord-Ouest": {
+						LRRName: "supreme.court.prov",
+						start: "1999-10-01"
+					},
+					"Cour territoriale des Territoires du Nord-Ouest": {
+						LRRName: "territorial.court",
+						start: "1999-10-01"
+					},
+					"Youth Justice Court": {
+						LRRName: "territorial.court",
+						start: "1999-10-01"
+					}
+				}
+			}
+		}
+	},
+	"ca:nu": {
+		language: {
+			"en": {
+				court: {
+					"Court of Appeal of Nunavut": {
+						LRRName: "court.appeal",
+						start: "2001-01-01"
+					},
+					"Nunavut Court of Justice": {
+						LRRName: "court.justice",
+						start: "2006-05-01"
+					},
+					"Youth Justice Court of Nunavut": {
+						LRRName: "youth.court",
+						start: "2011-01-01"
+					}
+				}
+			},
+			"fr": {
+				court: {
+					"Cour d'appel du Nunavut": {
+						LRRName: "court.appeal",
+						start: "2001-01-01"
+					},
+					"Cour de justice du Nunavut": {
+						LRRName: "court.justice",
+						start: "2006-05-01"
+					},
+					"Tribunal de la jeunesse du Nunavut": {
+						LRRName: "youth.court",
+						start: "2011-01-01"
+					}
+				}
+			}
+		}
+	},
+	"ca:on": {
+		language: {
+			"en": {
+				court: {
+					"Court of Appeal for Ontario": {
+						LRRName: "court.appeal",
+						start: "2007-01-01"
+					},
+					"Superior Court of Justice": {
+						LRRName: "superior.court",
+						start: "2010-01-01"
+					},
+					"Divisional Court": {
+						LRRName: "superior.court",
+						start: "2010-01-01"
+					},
+					"Ontario Court of Justice": {
+						LRRName: "court.justice",
+						start: "2004-01-01"
+					},
+					"Small Claims Court": {
+						LRRName: "superior.court",
+						start: ""
+					}
+				}
+			},
+			"fr": {
+				court: {
+					"Cour d'appel de l'Ontario": {
+						LRRName: "court.appeal",
+						start: "2007-01-01"
+					},
+					"Cour supérieure de justice": {
+						LRRName: "superior.court",
+						start: "2010-01-01"
+					},
+					"Cour divisionnaire": {
+						LRRName: "superior.court",
+						start: "2010-01-01"
+					},
+					"Cour de justice de l'Ontario": {
+						LRRName: "court.justice",
+						start: "2004-01-01"
+					},
+					"Cour des petites créances": {
+						LRRName: "superior.court",
+						start: ""
+					}
+				}
+			}
+		}
+	},
+	"ca:pe": {
+		language: {
+			"en": {
+				court: {
+					"Prince Edward Island Court of Appeal": {
+						LRRName: "court.appeal",
+						start: "2000-01-01"
+					},
+					"Supreme Court of Prince Edward Island": {
+						LRRName: "supreme.court.prov",
+						start: "2000-01-01"
+					},
+					"Provincial Court of Prince Edward Island": {
+						LRRName: "provincial.court",
+						start: ""
+					}
+				}
+			}
+		}
+	},
+	"ca:qc": {
+		language: {
+			"en": {
+				court: {
+					"Court of Appeal": {
+						LRRName: "court.appeal",
+						start: "2005-01-01"
+					},
+					"Superior Court": {
+						LRRName: "superior.court",
+						start: "2006-01-01"
+					},
+					"Court of Quebec": {
+						LRRName: "court.quebec",
+						start: "2006-01-01"
+					},
+					"Human Rights Tribunal": {
+						LRRName: "human.right.tribunal",
+						start: "2006-01-01"
+					},
+					"Professions Tribunal": {
+						LRRName: "tribunal.professions",
+						start: "1999-01-01"
+					},
+					"Municipal Courts": {
+						LRRName: "municipal.courts",
+						start: "2006-01-01"
+					}
+				}
+			},
+			"fr": {
+				court: {
+					"Cour d'appel": {
+						LRRName: "court.appeal",
+						start: "2005-01-01"
+					},
+					"Cour supérieure": {
+						LRRName: "superior.court",
+						start: "2006-01-01"
+					},
+					"Cour du Québec": {
+						LRRName: "court.quebec",
+						start: "2006-01-01"
+					},
+					"Tribunal des droits de la personne": {
+						LRRName: "human.right.tribunal",
+						start: "2006-01-01"
+					},
+					"Tribunal des professions": {
+						LRRName: "tribunal.professions",
+						start: "1999-01-01"
+					},
+					"Cours municipales": {
+						LRRName: "municipal.courts",
+						start: "2006-01-01"
+					}
+				}
+			}
+		}
+	},
+	"ca:sk": {
+		language: {
+			"en": {
+				court: {
+					"Court of Appeal for Saskatchewan": {
+						LRRName: "court.appeal",
+						start: "2000-01-01"
+					},
+					"Court of Queen's Bench for Saskatchewan": {
+						LRRName: "court.queens.bench",
+						start: "1999-01-01"
+					},
+					"Provincial Court of Saskatchewan": {
+						LRRName: "provincial.court",
+						start: "2002-01-01"
+					},
+					"Saskatchewan District Court": {
+						LRRName: "court.queens.bench",
+						start: ""
+					},
+					"Saskatchewan Surrogate Court": {
+						LRRName: "court.queens.bench",
+						start: ""
+					}
+				}
+			},
+			"fr": {
+				court: {
+					"Cour d'appel de la Saskatchewan": {
+						LRRName: "court.appeal",
+						start: "2000-01-01"
+					},
+					"Cour du Banc de la Reine de la Saskatchewan": {
+						LRRName: "court.queens.bench",
+						start: "1999-01-01"
+					},
+					"Cour provinciale de la Saskatchewan": {
+						LRRName: "provincial.court",
+						start: "2002-01-01"
+					},
+					"Saskatchewan District Court": {
+						LRRName: "court.queens.bench",
+						start: ""
+					},
+					"Saskatchewan Surrogate Court": {
+						LRRName: "court.queens.bench",
+						start: ""
+					}
+				}
+			}
+		}
+	},
+	"ca:yk": {
+		language: {
+			"en": {
+				court: {
+					"Court of Appeal": {
+						LRRName: "court.appeal",
+						start: "2000-03-01"
+					},
+					"Supreme Court of Yukon": {
+						LRRName: "supreme.court.prov",
+						start: "2000-03-01"
+					},
+					"Territorial Court of Yukon": {
+						LRRName: "territorial.court",
+						start: "1999-12-01"
+					},
+					"Small Claims Court of the Yukon": {
+						LRRName: "small.claims.court",
+						start: "2004-05-01"
+					}
+				}
+			},
+			"fr": {
+				court: {
+					"Cour d'appel": {
+						LRRName: "court.appeal",
+						start: "2000-03-01"
+					},
+					"Cour suprême du Yukon": {
+						LRRName: "supreme.court.prov",
+						start: "2000-03-01"
+					},
+					"Cour territoriale du Yukon": {
+						LRRName: "territorial.court",
+						start: "1999-12-01"
+					},
+					"Cour des petites créances du Yukon": {
+						LRRName: "small.claims.court",
+						start: "2004-05-01"
+					}
+				}
+			}
+		}
+	}
+}	
+
+
+
 function attr(docOrElem,selector,attr,index){var elem=index?docOrElem.querySelectorAll(selector).item(index):docOrElem.querySelector(selector);return elem?elem.getAttribute(attr):null;}function text(docOrElem,selector,index){var elem=index?docOrElem.querySelectorAll(selector).item(index):docOrElem.querySelector(selector);return elem?elem.textContent:null;}
 
 var canLiiRegexp = /https?:\/\/(?:www\.)?canlii\.org[^/]*\/(?:en|fr)\/[^/]+\/[^/]+\/doc\/.+/;
@@ -262,15 +840,29 @@ function othervalues(doc, url, newItem, voliss) {
 	var provinceDetails = provinceURL.match(provinceRegex);
 	var province = provinceDetails[1];
 	if (province == 'ca') {
-		newItem.jurisdiction = province;
+		jurisdiction = province;
 	}
 	else {
-		newItem.jurisdiction = "ca:"+province;
+		jurisdiction = "ca:"+province;
 	}
+	
+	newItem.jurisdiction = jurisdiction
 
-	newItem.language = doc.documentElement.lang;
-	newItem.court = text('#breadcrumbs span', 2);
+	language = doc.documentElement.lang;
+	newItem.language = language
+	court_description = text('#breadcrumbs span', 2);
 	newItem.dateDecided = ZU.xpathText(doc, '//div[@id="documentMeta"]//div[contains(text(), "Date")]/following-sibling::div');
+	
+	court_description = text('#breadcrumbs span', 2);
+	newItem.dateDecided = ZU.xpathText(doc, '//div[@id="documentMeta"]//div[contains(text(), "Date")]/following-sibling::div');
+	
+	if (courtsDict[jurisdiction].language[language].court[court_description]) {
+		court = courtsDict[jurisdiction].language[language].court[court_description].LRRName;
+	} else {
+		court = court_description;
+	}
+	newItem.court = court
+	
 	newItem.docketNumber = ZU.xpathText(doc, '//div[@id="documentMeta"]//div[contains(text(), "File number") or contains(text(), "Numéro de dossier")]/following-sibling::div');
 	var otherCitations = ZU.xpathText(doc, '//div[@id="documentMeta"]//div[contains(text(), "Other citations") or contains(text(), "Autres citations")]/following-sibling::div');
 	if (otherCitations) {
@@ -673,7 +1265,7 @@ var testCases = [
 				"caseName": "Gordon v. Goertz",
 				"creators": [],
 				"dateDecided": "1996-05-02",
-				"court": "Supreme Court of Canada",
+				"court": "supreme.court",
 				"docketNumber": "24622",
 				"firstPage": "27",
 				"itemID": "0",
@@ -708,7 +1300,7 @@ var testCases = [
 				"caseName": "Gordon v. Goertz",
 				"creators": [],
 				"dateDecided": "1996-05-02",
-				"court": "Supreme Court of Canada",
+				"court": "supreme.court",
 				"docketNumber": "24622",
 				"firstPage": "191",
 				"itemID": "1",
