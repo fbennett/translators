@@ -12,7 +12,7 @@
 	"inRepository": true,
 	"translatorType": 3,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2019-01-31 00:12:00"
+	"lastUpdated": "2020-01-31 00:12:00"
 }
 
 var mimeTypes = {
@@ -123,13 +123,21 @@ function importNext(data, resolve, reject) {
             item.tags = [];
 			if (d.attachments && d.attachments.length) {
 				for (var att of d.attachments) {
-                    var title = null, path = null, tags = [];
+                    var title = null, path = null, note = null, tags = [];
                     if (typeof att === "string") {
-                        title = "Attachment";
+                        title = att.replace(/^.*\//, "");
                         path = att;
-                    } else if (att.title && att.path) {
-                        title = att.title;
+                    } else if (att.path) {
+						if (att.title) {
+							title = att.title;
+						} else {
+							title = att.path.replace(/^.*\//, "");
+						}
+						if (att.note) {
+							note = att.note;
+						}
                         path = att.path;
+						
                     }
 					if (att.tags) {
 						tags = att.tags;
@@ -139,6 +147,7 @@ function importNext(data, resolve, reject) {
 						    title: title,
 						    path: path,
 						    tags: tags,
+							note: note,
 						    mimeType: getMimeType(path)
 					    });
                     }
