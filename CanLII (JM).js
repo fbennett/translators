@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2021-02-23 16:12:42"
+	"lastUpdated": "2021-02-26 15:45:33"
 }
 
 /*
@@ -506,6 +506,10 @@ var courtsDict = {
 					"Cours municipales": {
 						LRRName: "municipal.courts",
 						start: "2006-01-01"
+					},
+					"Tribunal administratif du Québec": {
+						LRRName: "quebec.admin.tribunal",
+						start: ""
 					}
 				}
 			}
@@ -833,8 +837,14 @@ function createrelationship(items) {
 }
 
 function othervalues(doc, url, newItem, voliss) {
-	var citationParts = voliss.split(',');
-	newItem.caseName = citationParts[0];
+	var titleRegex = /([\s\S]+?)\,\s(\d{4}\s+\w+\s\d+|\[\d{4}\]\s\d*\s*\w+\s\d+|\d+\s+[A-Z]+\s+\(\d+(?:\w+)\)\s\d+)(?:\s\([\s\w]+\))?(?:\,\s)?(\d{4}\s+\w+\s\d+|\[\d{4}\]\s\d*\s\w+\s\d+|\d+\s+[A-Z]+\s+\(\d+(?:\w+)\)\s\d+)?(?:\s\([\s\w]+\))?/;
+	var citationParts = voliss.match(titleRegex);
+	newCaseName = {};
+	NameParts = citationParts[1].split(';');
+	newCaseName = NameParts[0];
+	newItem.caseName = newCaseName;
+	//newItem.multi._keys.caseName = {};
+	//newItem.multi._keys.caseName = "test";
 	var provinceRegex = /https?:\/\/(?:www\.)?canlii\.org[^/]*\/(?:en|fr)\/([^/]+)\/[^/]+\/doc\/.+/;
 	var provinceURL = url;
 	var provinceDetails = provinceURL.match(provinceRegex);
@@ -856,14 +866,16 @@ function othervalues(doc, url, newItem, voliss) {
 	court_description = text('#breadcrumbs span', 2);
 	newItem.dateDecided = ZU.xpathText(doc, '//div[@id="documentMeta"]//div[contains(text(), "Date")]/following-sibling::div');
 	
-	if (courtsDict[jurisdiction].language[language].court[court_description]) {
+	if (courtsDict[jurisdiction].language[language].court[court_description].LRRName) {
 		court = courtsDict[jurisdiction].language[language].court[court_description].LRRName;
 	} else {
 		court = court_description;
 	}
 	newItem.court = court
 	
-	newItem.docketNumber = ZU.xpathText(doc, '//div[@id="documentMeta"]//div[contains(text(), "File number") or contains(text(), "Numéro de dossier")]/following-sibling::div');
+	docketNumberList = ZU.xpathText(doc, '//div[@id="documentMeta"]//div[contains(text(), "File number") or contains(text(), "Numéro de dossier")]/following-sibling::div');
+	docketNumber = docketNumberList.split(';');
+	newItem.docketNumber = docketNumber[0];
 	var otherCitations = ZU.xpathText(doc, '//div[@id="documentMeta"]//div[contains(text(), "Other citations") or contains(text(), "Autres citations")]/following-sibling::div');
 	if (otherCitations) {
 		newItem.notes.push({ note: "Other Citations: " + ZU.trimInternal(otherCitations) });
@@ -912,7 +924,8 @@ function doWeb(doc, url) {
 			ZU.processDocuments(articles, scrape);
 		});
 	}
-}/** BEGIN TEST CASES **/
+}
+/** BEGIN TEST CASES **/
 var testCases = [
 	{
 		"type": "web",
@@ -1265,7 +1278,7 @@ var testCases = [
 				"caseName": "Gordon v. Goertz",
 				"creators": [],
 				"dateDecided": "1996-05-02",
-				"court": "supreme.court",
+				"court": "Supreme Court of Canada",
 				"docketNumber": "24622",
 				"firstPage": "27",
 				"itemID": "0",
@@ -1300,7 +1313,7 @@ var testCases = [
 				"caseName": "Gordon v. Goertz",
 				"creators": [],
 				"dateDecided": "1996-05-02",
-				"court": "supreme.court",
+				"court": "Supreme Court of Canada",
 				"docketNumber": "24622",
 				"firstPage": "191",
 				"itemID": "1",
