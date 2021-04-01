@@ -782,7 +782,7 @@ function caseBilingual(item,bilingual) {
 	Zotero.Utilities.processDocuments(altLangUrl, function(altDoc) {
 		altCitationString = createMainCitationString(altDoc);
 		altCaseName = caseTitle(altCitationString);
-		item.multi._keys.caseName[altLang] = altTitle;
+		item.multi._keys.caseName[altLang] = altCasename;
 		item.complete();
 	});
 }
