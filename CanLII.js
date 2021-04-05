@@ -710,9 +710,9 @@ function createNeutral(doc,url,regex,citationString){
 }
 
 function othervalues(doc,url,item,mainCitationString) {
-	item.caseName = caseTitle(mainCitationString);
-	item.jurisdiction = caseJurisdiction(url);
 	item.language = doc.documentElement.lang;
+	ZU.setMultiField(item,"caseName",caseTitle(mainCitationString),item.language,item.language);
+	item.jurisdiction = caseJurisdiction(url);
 	item.court = caseCourt(item);
 	item.dateDecided = ZU.xpathText(doc, '//div[@id="documentMeta"]//div[contains(text(), "Date")]/following-sibling::div');
 	item.docketNumber = caseDocket(doc);
@@ -777,12 +777,11 @@ function caseAltLang(item){
 
 function caseBilingual(item,bilingual) {
 	var altLang = caseAltLang(item);
-	item.multi._keys.caseName = {};
 	var altLangUrl = 'https://www.canlii.org/'+attr(bilingual, '.canlii', 'href', 0);
 	Zotero.Utilities.processDocuments(altLangUrl, function(altDoc) {
 		altCitationString = createMainCitationString(altDoc);
 		altCaseName = caseTitle(altCitationString);
-		item.multi._keys.caseName[altLang] = altTitle;
+		ZU.setMultiField(item,"caseName", altCaseName,altLang,item.language)
 		item.complete();
 	});
 }
