@@ -118,6 +118,22 @@ function importNext(data, resolve, reject) {
 				delete d.journalAbbreviation;
 			}
 			var item = new Z.Item();
+			
+			// Default to 'article' (Document) if no type given. 'type' is required in CSL-JSON,
+			// but some DOI registration agencies provide bad data, and this is better than failing.
+			// (itemFromCSLJSON() will already default to 'article' for unknown 'type' values.)
+			//
+			// Technically this should go in the DOI Content Negotation translator, but it's easier
+			// to do this here after the JSON has been parsed, and it might benefit other translators.
+			//
+			// This is just for imports from other translators. File/clipboard imports without
+			// 'type' still won't work, because a valid 'type' is required in detectImport().
+			//
+			// https://forums.zotero.org/discussion/85273/error-importing-dois-via-add-item-by-identifier
+			if (!d.type) {
+				d.type = 'article';
+			}
+			
 			ZU.itemFromCSLJSON(item, d);
 			item.attachments = [];
             item.tags = [];
