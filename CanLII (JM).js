@@ -1,3 +1,17 @@
+{
+	"translatorID": "6968dace-7c12-4eb2-ae4b-d2731ddbba6e",
+	"label": "CanLII (JM)",
+	"creator": "Samuel Gagnon",
+	"target": "^https?://(www\\.)?canlii\\.org/(en|fr)/",
+	"minVersion": "3.0",
+	"maxVersion": "",
+	"priority": 100,
+	"inRepository": true,
+	"translatorType": 4,
+	"browserSupport": "gcsibv",
+	"lastUpdated": "2021-05-05 19:58:21"
+}
+
 /*
 	***** BEGIN LICENSE BLOCK *****
 	Copyright © 2012 Sebastian Karcher
@@ -884,3 +898,45 @@ function doWeb(doc, url) {
 	}
 }
 
+/** BEGIN TEST CASES **/
+var testCases = [
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/en/ca/scc/doc/2021/2021scc8/2021scc8.html",
+		"items": [
+			{
+				"itemType": "case",
+				"caseName": "R. v. W.O.",
+				"creators": [],
+				"dateDecided": "2021-02-19",
+				"court": "supreme.court",
+				"docketNumber": "39245",
+				"documentNumber": "8",
+				"itemID": "0",
+				"jurisdiction": "ca",
+				"language": "en",
+				"url": "https://canlii.ca/t/jd9kd",
+				"yearAsVolume": "2021",
+				"attachments": [
+					{
+						"title": "CanLII Full Text PDF",
+						"mimeType": "application/pdf"
+					},
+					{
+						"title": "CanLII Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/fr/ca/csc/doc/1990/1990canlii133/1990canlii133.html",
+		"items": "multiple"
+	}
+]
+/** END TEST CASES **/
