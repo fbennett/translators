@@ -1,3 +1,17 @@
+{
+	"translatorID": "64542506-f69d-4348-8e4b-702ee9ccd398",
+	"label": "CanLII",
+	"creator": "Samuel Gagnon",
+	"target": "^https?://(www\\.)?canlii\\.org/(en|fr)/",
+	"minVersion": "3.0",
+	"maxVersion": "",
+	"priority": 100,
+	"inRepository": true,
+	"translatorType": 4,
+	"browserSupport": "gcsibv",
+	"lastUpdated": "2021-05-06 19:22:26"
+}
+
 /*
 	***** BEGIN LICENSE BLOCK *****
 	Copyright © 2012 Sebastian Karcher
@@ -622,13 +636,10 @@ function detectWeb(doc, url) {
 
 
 function scrape(doc, url) {
-	items = [];
-	caseReference(doc,url,items);
-	createRelationship(items);
-	completeItems(items,doc);
+	items = caseReference(doc,url);
 }
 
-function createCaseReference(doc,url,reference,canLII,citationString) {
+function createCaseReference(doc,url,reference,canLII,citationString,id) {
 	var referenceRegex =  /^(?:\[(\d{4})\]|(\d{4}))?\s?(?:(\d+)\s)?([\D]+?)(?:(?:(?:\s\(|\s(?:no\s))(\d+)(?:\w+\)\s|$|\s))|\s)(\d+)?(?:\(\w+\))?$/i;
 	// 1 : yearAsVol
 	// 2 : archiveDate
@@ -636,21 +647,23 @@ function createCaseReference(doc,url,reference,canLII,citationString) {
 	// 4 : reporter
 	// 5 : issue
 	// 6 : firstPage
-	var referenceParts = reference.match(referenceRegex);
 	var item = new Zotero.Item("case");
-	if (referenceParts[1]) item.yearAsVolume = referenceParts[1];
-	if (referenceParts[2]) item.archiveDate = referenceParts[2];
-	if (referenceParts[3]) item.reporterVolume = referenceParts[3];
-	if (referenceParts[4]) item.reporter = referenceParts[4];
-	if (referenceParts[5]) item.issue = referenceParts[5];
-	if (referenceParts[6]) item.firstPage = referenceParts[6];
+	if (reference) {
+		var referenceParts = reference.match(referenceRegex);
+		if (referenceParts[1]) item.yearAsVolume = referenceParts[1];
+		if (referenceParts[2]) item.archiveDate = referenceParts[2];
+		if (referenceParts[3]) item.reporterVolume = referenceParts[3];
+		if (referenceParts[4]) item.reporter = referenceParts[4];
+		if (referenceParts[5]) item.issue = referenceParts[5];
+		if (referenceParts[6]) item.firstPage = referenceParts[6];
+	}
 	if (canLII) {
 		item.filingDate = canLII[1];
 		item.archive = "CanLII";
 		item.archiveLocation = canLII[3];
 	}
+	item.id = id;
 	othervalues(doc,url,item,citationString);
-	Zotero.debug(item);
 	return item;
 }
 
@@ -666,12 +679,15 @@ function createOtherCitationString(doc){
 	return ZU.xpathText(doc, '//div[@id="documentMeta"]//div[contains(text(), "Other citations") or contains(text(), "Autres citations") or contains(text(), "Other citation") or contains(text(), "Autre citation")]/following-sibling::div');
 }
 
-function caseReference(doc,url,items){
+function caseReference(doc,url){
+	var items = [];
 	var mainCitationString = createMainCitationString(doc);
 	var otherCitationString = createOtherCitationString(doc);
 	var neutral = (checkNeutral(mainCitationString,otherCitationString));
 	if (neutral) {
 		items.push(createNeutral(doc,url,neutral,mainCitationString));
+		createRelationship(items);
+		completeItems(items,doc);
 	}
 	else {
 		var referenceArray = [];
@@ -679,29 +695,26 @@ function caseReference(doc,url,items){
 		buildReferenceArray(otherCitationString,referenceArray);
 		var referenceObject = Object.assign({},referenceArray);
 		Zotero.selectItems(referenceObject,function(selectedReferences) {
-			if(!selectedReferences) return true;
-			selectedList = [];
-			for (var i in selectedReferences) {
-				selectedList.push(selectedReferences[i]);
-			}
-			if (Object.keys(selectedList).length == 1) {
-				if (checkCanLII(selectedList[0])) {
-					items.push(createCaseReference(doc,url,selectedList[0],false,mainCitationString));
-				}
-				else {
-					for (i = 0, ilen = Object.keys(referenceObject).length; i < ilen; i += 1) {
-						var canLII = checkCanLII(referenceObject[i]);
-						if (canLII) {
-							items.push(createCaseReference(doc,url,selectedList[0],canLII,mainCitationString));
+			for (var reference in selectedReferences) {
+				if (Object.keys(selectedReferences).length == 1) {
+					if (checkCanLII(selectedReferences[reference])) {
+						items.push(createCaseReference(doc,url,false,checkCanLII(selectedReferences[reference]),mainCitationString,reference));
+					}
+					else {
+						for (i = 0, ilen = Object.keys(referenceObject).length; i < ilen; i += 1) {
+							var canLII = checkCanLII(referenceObject[i]);
+							if (canLII) {
+								items.push(createCaseReference(doc,url,selectedReferences[reference],canLII,mainCitationString,reference));
+							}
 						}
 					}
 				}
-			}
-			else {
-				for (i = 0, ilen = Object.keys(selectedList).length; i < ilen; i += 1) {		
-					items.push(createCaseReference(doc,url,selectedList[i],false,mainCitationString));
+				else {
+					items.push(createCaseReference(doc,url,selectedReferences[reference],false,mainCitationString,reference));
 				}
 			}
+			createRelationship(items);
+			completeItems(items,doc);
 		});
 	}
 }
@@ -811,8 +824,19 @@ function caseBilingual(item,bilingual) {
 	var altLangUrl = 'https://www.canlii.org/'+attr(bilingual, '.canlii', 'href', 0);
 	Zotero.Utilities.processDocuments(altLangUrl, function(altDoc) {
 		altCitationString = createMainCitationString(altDoc);
+		altOtherCitationString = createOtherCitationString(altDoc);
 		altCaseName = caseTitle(altCitationString);
 		ZU.setMultiField(item,"caseName", altCaseName,altLang,item.language)
+		if (item.id) {
+			var referenceArray = [];
+			buildReferenceArray(altCitationString,referenceArray);
+			buildReferenceArray(altOtherCitationString,referenceArray);
+			var referenceObject = Object.assign({},referenceArray);
+			var altReference = referenceObject[item.id];
+			var referenceRegex =  /^(?:\[(\d{4})\]|(\d{4}))?\s?(?:(\d+)\s)?([\D]+?)(?:(?:(?:\s\(|\s(?:no\s))(\d+)(?:\w+\)\s|$|\s))|\s)(\d+)?(?:\(\w+\))?$/i;
+			altReporter = altReference.match(referenceRegex)[4];
+			ZU.setMultiField(item,"reporter", altReporter,altLang,item.language)
+		}
 		item.complete();
 	});
 }
@@ -832,21 +856,20 @@ function caseAttachements(doc,url,item) {
 }
 
 function createRelationship(items) {
-	var items, i, ilen, j, jlen;
- 
-	// Assign a bogus itemID to each item in the set
-	for (i = 0, ilen = items.length; i < ilen; i += 1) {
-		items[i].itemID = "" + i;
-	}
 
-	// Set bogus itemIDs in each item's seeAlso
+	idList = [];
+	for (item in items){
+		idList.push(items[item].id);
+	}
+	Zotero.debug(idList);
+	//Set bogus itemIDs in each item's seeAlso
 	// field (skipping the item's own ID)
-	for (i = 0, ilen = items.length; i < ilen; i += 1) {
-		for (j = 0, jlen = items.length; j < jlen; j += 1) {
-			if (i === j) {
+	for (id in idList) {
+		for (item in items) {
+			if (idList[id] === items[item].id) {
 				continue;
 			}
-			items[i].seeAlso.push("" + j);
+			items[item].seeAlso.push("" + idList[id]);
 		}
 	}
 }
@@ -884,3 +907,145 @@ function doWeb(doc, url) {
 	}
 }
 
+
+/** BEGIN TEST CASES **/
+var testCases = [
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/fr/ca/csc/doc/2021/2021csc13/2021csc13.html",
+		"items": [
+			{
+				"itemType": "case",
+				"caseName": "R. c. Sheikh",
+				"creators": [],
+				"dateDecided": "2021-04-16",
+				"court": "supreme.court",
+				"docketNumber": "39372",
+				"documentNumber": "13",
+				"itemID": "0",
+				"jurisdiction": "ca",
+				"language": "fr",
+				"url": "https://canlii.ca/t/jfgrg",
+				"yearAsVolume": "2021",
+				"attachments": [
+					{
+						"title": "CanLII Full Text PDF",
+						"mimeType": "application/pdf"
+					},
+					{
+						"title": "CanLII Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/fr/ca/csc/doc/1990/1990canlii133/1990canlii133.html",
+		"items": [
+			{
+				"itemType": "case",
+				"caseName": "Mahe c. Alberta",
+				"creators": [],
+				"dateDecided": "1990-03-15",
+				"archive": "CanLII",
+				"archiveLocation": "133",
+				"court": "supreme.court",
+				"docketNumber": "20590",
+				"filingDate": "1990",
+				"firstPage": "342",
+				"itemID": "0",
+				"jurisdiction": "ca",
+				"language": "fr",
+				"reporter": "RCS",
+				"reporterVolume": "1",
+				"url": "https://canlii.ca/t/1fsz3",
+				"yearAsVolume": "1990",
+				"attachments": [
+					{
+						"title": "CanLII Full Text PDF",
+						"mimeType": "application/pdf"
+					},
+					{
+						"title": "CanLII Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/fr/ca/csc/doc/1990/1990canlii133/1990canlii133.html?autocompleteStr=mah%C3%A9&autocompletePos=1",
+		"items": [
+			{
+				"itemType": "case",
+				"caseName": "Mahe c. Alberta",
+				"creators": [],
+				"dateDecided": "1990-03-15",
+				"court": "supreme.court",
+				"docketNumber": "20590",
+				"firstPage": "133",
+				"itemID": "0",
+				"jurisdiction": "ca",
+				"language": "fr",
+				"reporter": "CanLII",
+				"url": "https://canlii.ca/t/1fsz3",
+				"attachments": [
+					{
+						"title": "CanLII Full Text PDF",
+						"mimeType": "application/pdf"
+					},
+					{
+						"title": "CanLII Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": [
+					"1"
+				]
+			},
+			{
+				"itemType": "case",
+				"caseName": "Mahe c. Alberta",
+				"creators": [],
+				"dateDecided": "1990-03-15",
+				"court": "supreme.court",
+				"docketNumber": "20590",
+				"firstPage": "342",
+				"itemID": "1",
+				"jurisdiction": "ca",
+				"language": "fr",
+				"reporter": "RCS",
+				"reporterVolume": "1",
+				"url": "https://canlii.ca/t/1fsz3",
+				"yearAsVolume": "1990",
+				"attachments": [
+					{
+						"title": "CanLII Full Text PDF",
+						"mimeType": "application/pdf"
+					},
+					{
+						"title": "CanLII Snapshot",
+						"mimeType": "text/html"
+					}
+				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": [
+					"0"
+				]
+			}
+		]
+	}
+]
+/** END TEST CASES **/
