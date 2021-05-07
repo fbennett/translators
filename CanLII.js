@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2021-05-06 19:22:26"
+	"lastUpdated": "2021-05-07 17:51:29"
 }
 
 /*
@@ -483,7 +483,7 @@ var courtsDict = {
 			},
 			"fr": {
 				court: {
-					"Cour d'appel": {
+					"Cour d'appel du Québec": {
 						LRRName: "court.appeal",
 						start: "2005-01-01"
 					},
@@ -613,8 +613,6 @@ var courtsDict = {
 	}
 };
 
-
-
 function attr(docOrElem,selector,attr,index){var elem=index?docOrElem.querySelectorAll(selector).item(index):docOrElem.querySelector(selector);return elem?elem.getAttribute(attr):null;}function text(docOrElem,selector,index){var elem=index?docOrElem.querySelectorAll(selector).item(index):docOrElem.querySelector(selector);return elem?elem.textContent:null;}
 
 var canLiiRegexp = /https?:\/\/(?:www\.)?canlii\.org[^/]*\/(?:en|fr)\/[^/]+\/[^/]+\/doc\/.+/;
@@ -634,49 +632,56 @@ function detectWeb(doc, url) {
 	return false;
 }
 
-
 function scrape(doc, url) {
 	items = caseReference(doc,url);
 }
 
-function createCaseReference(doc,url,reference,canLII,citationString,id) {
-	var referenceRegex =  /^(?:\[(\d{4})\]|(\d{4}))?\s?(?:(\d+)\s)?([\D]+?)(?:(?:(?:\s\(|\s(?:no\s))(\d+)(?:\w+\)\s|$|\s))|\s)(\d+)?(?:\(\w+\))?$/i;
-	// 1 : yearAsVol
-	// 2 : archiveDate
-	// 3 : reporterVolume
-	// 4 : reporter
-	// 5 : issue
-	// 6 : firstPage
-	var item = new Zotero.Item("case");
-	if (reference) {
-		var referenceParts = reference.match(referenceRegex);
-		if (referenceParts[1]) item.yearAsVolume = referenceParts[1];
-		if (referenceParts[2]) item.archiveDate = referenceParts[2];
-		if (referenceParts[3]) item.reporterVolume = referenceParts[3];
-		if (referenceParts[4]) item.reporter = referenceParts[4];
-		if (referenceParts[5]) item.issue = referenceParts[5];
-		if (referenceParts[6]) item.firstPage = referenceParts[6];
+function buildReferenceArray(string,array){
+	referenceRegex = /(?:(\d+\s\w+\s\d+)|(\[\d{4}\]\s\d*\s*[\w\s]+\s\d+\s?\(?\w*\)?)|(\d+\s[\w\s]+\s+\(\d+\w+\)\s\d+))/g;
+	if (string && string.match(referenceRegex)) {
+		references = string.match(referenceRegex);
+		for (i = 0, ilen = references.length; i < ilen; i += 1) {
+			references[i] = ZU.trim(references[i]);
+			array.push(references[i]);
+		}
 	}
-	if (canLII) {
-		item.filingDate = canLII[1];
-		item.archive = "CanLII";
-		item.archiveLocation = canLII[3];
-	}
-	item.id = id;
-	othervalues(doc,url,item,citationString);
-	return item;
 }
 
-function createMainCitationString(doc){
-	var citationString = doc.getElementsByClassName('documentMeta-citation')[0].nextElementSibling;
-	citationString = ZU.trimInternal(
-		ZU.xpathText(citationString, './node()[not(self::script)]', null, '') // We technically only use ./text() parts, but this is less confusing
-	);
-	return citationString;
+function caseCourt(item) {
+	court_description = text('#breadcrumbs span', 2);
+	if (courtsDict[item.jurisdiction].language[item.language].court[court_description].LRRName) {
+		return courtsDict[item.jurisdiction].language[item.language].court[court_description].LRRName;
+	} else {
+		return court_description;
+	}
 }
 
-function createOtherCitationString(doc){
-	return ZU.xpathText(doc, '//div[@id="documentMeta"]//div[contains(text(), "Other citations") or contains(text(), "Autres citations") or contains(text(), "Other citation") or contains(text(), "Autre citation")]/following-sibling::div');
+function caseJurisdiction(url){
+	var provinceRegex = /https?:\/\/(?:www\.)?canlii\.org[^/]*\/(?:en|fr)\/([^/]+)\/[^/]+\/doc\/.+/;
+	var provinceDetails = url.match(provinceRegex);
+	var province = provinceDetails[1];
+	if (province == 'ca') {
+		return province;
+	}
+	else {
+		return "ca:"+province;
+	}
+}
+
+function caseTitle(citationString){
+	var titleRegex = /([\s\S]+?)\,\s(\d{4}\s+\w+\s\d+|\[\d{4}\]\s\d*\s*\w+\s\d+|\d+\s+[A-Z]+\s+\(\d+(?:\w+)\)\s\d+)(?:\s\([\s\w]+\))?(?:\,\s)?(\d{4}\s+\w+\s\d+|\[\d{4}\]\s\d*\s\w+\s\d+|\d+\s+[A-Z]+\s+\(\d+(?:\w+)\)\s\d+)?(?:\s\([\s\w]+\))?/;
+	var citationParts = citationString.match(titleRegex);
+	var NameParts = citationParts[1].split(';');
+	return NameParts[0];
+}
+
+function caseDocket(doc) {
+	var docket = ZU.xpathText(doc, '//div[@id="documentMeta"]//div[contains(text(), "File number") or contains(text(), "Numéro de dossier")]/following-sibling::div');
+	if (docket) {
+		docketNumberList = ZU.trimInternal(docket);
+		docketNumber = docketNumberList.split(';');
+		return docketNumber[0];
+	}
 }
 
 function caseReference(doc,url){
@@ -694,110 +699,22 @@ function caseReference(doc,url){
 		buildReferenceArray(mainCitationString,referenceArray);
 		buildReferenceArray(otherCitationString,referenceArray);
 		var referenceObject = Object.assign({},referenceArray);
+		for (i = 0, ilen = Object.keys(referenceObject).length; i < ilen; i += 1) {
+			if (checkCanLII(referenceObject[i])) var canLII = checkCanLII(referenceObject[i]);
+		}
 		Zotero.selectItems(referenceObject,function(selectedReferences) {
 			for (var reference in selectedReferences) {
-				if (Object.keys(selectedReferences).length == 1) {
-					if (checkCanLII(selectedReferences[reference])) {
-						items.push(createCaseReference(doc,url,false,checkCanLII(selectedReferences[reference]),mainCitationString,reference));
-					}
-					else {
-						for (i = 0, ilen = Object.keys(referenceObject).length; i < ilen; i += 1) {
-							var canLII = checkCanLII(referenceObject[i]);
-							if (canLII) {
-								items.push(createCaseReference(doc,url,selectedReferences[reference],canLII,mainCitationString,reference));
-							}
-						}
-					}
+				if (selectedReferences[reference] == canLII[0]) {
+					items.push(createCaseReference(doc,url,selectedReferences[reference],false,mainCitationString,reference));
 				}
 				else {
-					items.push(createCaseReference(doc,url,selectedReferences[reference],false,mainCitationString,reference));
+					items.push(createCaseReference(doc,url,selectedReferences[reference],canLII,mainCitationString,reference));
 				}
 			}
 			createRelationship(items);
 			completeItems(items,doc);
 		});
 	}
-}
-
-function buildReferenceArray(string,array){
-	referenceRegex = /(?:(\d+\s\w+\s\d+)|(\[\d{4}\]\s\d*\s*[\w\s]+\s\d+\s?\(?\w*\)?)|(\d+\s[\w\s]+\s+\(\d+\w+\)\s\d+))/g;
-	references = string.match(referenceRegex);
-	for (i = 0, ilen = references.length; i < ilen; i += 1) {
-		references[i] = ZU.trim(references[i]);
-		array.push(references[i]);
-	}
-}
-
-function checkCanLII(citationString){
-	var canLIIRegex = /(\d\d\d\d+)\s+(CanLII)\s+(\d+)/;
-	if (citationString.match(canLIIRegex)) return citationString.match(canLIIRegex);
-	else return false;
-}
-
-function checkNeutral(citationString,otherCitationString){
-	var mainNeutralRegex = /(\d\d\d\d+)\s+(?:[A-Z]+)\s+(\d+)\s+\(CanLII\)/;
-	var otherNeutralRegex = /(\d\d\d\d+)\s+(?:[A-Z]+)\s+(\d+)\s+/;
-	if (citationString.match(mainNeutralRegex)) {
-		return citationString.match(mainNeutralRegex);	
-	}
-	else if (otherCitationString && otherCitationString.match(otherNeutralRegex)) {
-		return otherCitationString.match(otherNeutralRegex);
-	}
-}
-
-function createNeutral(doc,url,regex,citationString){
-	var item = new Zotero.Item("case");
-	item.yearAsVolume = regex[1];
-	item.documentNumber = regex[2];
-	othervalues(doc,url,item,citationString);
-	return item;
-}
-
-function othervalues(doc,url,item,mainCitationString) {
-	item.language = doc.documentElement.lang;
-	ZU.setMultiField(item,"caseName",caseTitle(mainCitationString),item.language,item.language);
-	item.jurisdiction = caseJurisdiction(url);
-	item.court = caseCourt(item);
-	item.dateDecided = ZU.xpathText(doc, '//div[@id="documentMeta"]//div[contains(text(), "Date")]/following-sibling::div');
-	item.docketNumber = caseDocket(doc);
-	item.url = caseUrl(doc);	
-	caseAttachements(doc,url,item);
-}
-
-function caseTitle(citationString){
-	var titleRegex = /([\s\S]+?)\,\s(\d{4}\s+\w+\s\d+|\[\d{4}\]\s\d*\s*\w+\s\d+|\d+\s+[A-Z]+\s+\(\d+(?:\w+)\)\s\d+)(?:\s\([\s\w]+\))?(?:\,\s)?(\d{4}\s+\w+\s\d+|\[\d{4}\]\s\d*\s\w+\s\d+|\d+\s+[A-Z]+\s+\(\d+(?:\w+)\)\s\d+)?(?:\s\([\s\w]+\))?/;
-	var citationParts = citationString.match(titleRegex);
-	var NameParts = citationParts[1].split(';');
-	return NameParts[0];
-}
-
-function caseJurisdiction(url){
-	var provinceRegex = /https?:\/\/(?:www\.)?canlii\.org[^/]*\/(?:en|fr)\/([^/]+)\/[^/]+\/doc\/.+/;
-	var provinceDetails = url.match(provinceRegex);
-	var province = provinceDetails[1];
-	if (province == 'ca') {
-		return province;
-	}
-	else {
-		return "ca:"+province;
-	}
-}
-
-function caseCourt(item) {
-	court_description = text('#breadcrumbs span', 2);	
-	if (courtsDict[item.jurisdiction].language[item.language].court[court_description].LRRName) {
-		return courtsDict[item.jurisdiction].language[item.language].court[court_description].LRRName;
-	} else {
-		return court_description;
-	}
-}
-
-function caseDocket(doc) {
-	docketNumberList = ZU.trimInternal(
-		ZU.xpathText(doc, '//div[@id="documentMeta"]//div[contains(text(), "File number") or contains(text(), "Numéro de dossier")]/following-sibling::div')
-	);
-	docketNumber = docketNumberList.split(';');
-	return docketNumber[0];
 }
 
 function caseUrl(doc){
@@ -827,7 +744,7 @@ function caseBilingual(item,bilingual) {
 		altOtherCitationString = createOtherCitationString(altDoc);
 		altCaseName = caseTitle(altCitationString);
 		ZU.setMultiField(item,"caseName", altCaseName,altLang,item.language)
-		if (item.id) {
+		if (item.id && item.reporter) {
 			var referenceArray = [];
 			buildReferenceArray(altCitationString,referenceArray);
 			buildReferenceArray(altOtherCitationString,referenceArray);
@@ -855,13 +772,88 @@ function caseAttachements(doc,url,item) {
 	});
 }
 
+function checkCanLII(citationString){
+	var canLIIRegex = /(\d\d\d\d+)\s+(CanLII)\s+(\d+)/;
+	if (citationString.match(canLIIRegex)) return citationString.match(canLIIRegex);
+	else return false;
+}
+
+function checkNeutral(citationString,otherCitationString){
+	var mainNeutralRegex = /(\d\d\d\d+)\s+(?:[A-Z]+)\s+(\d+)\s+\(CanLII\)/;
+	var otherNeutralRegex = /(\d\d\d\d+)\s+(?:[A-Z]+)\s+(\d+)\s+/;
+	if (citationString.match(mainNeutralRegex)) {
+		return citationString.match(mainNeutralRegex);	
+	}
+	else if (otherCitationString && otherCitationString.match(otherNeutralRegex)) {
+		return otherCitationString.match(otherNeutralRegex);
+	}
+}
+
+function createNeutral(doc,url,regex,citationString){
+	var item = new Zotero.Item("case");
+	item.yearAsVolume = regex[1];
+	item.firstPage = regex[2];
+	othervalues(doc,url,item,citationString);
+	return item;
+}
+
+function createCaseReference(doc,url,reference,canLII,citationString,id) {
+	var referenceRegex =  /^(?:\[(\d{4})\]|(\d{4}))?\s?(?:(\d+)\s)?([\D]+?)(?:(?:(?:\s\(|\s(?:no\s))(\d+)(?:\w+\)\s|$|\s))|\s)(\d+)?(?:\(\w+\))?$/i;
+	// 1 : yearAsVol
+	// 2 : archiveDate
+	// 3 : reporterVolume
+	// 4 : reporter
+	// 5 : issue
+	// 6 : firstPage
+	var item = new Zotero.Item("case");
+	if (reference) {
+		var referenceParts = reference.match(referenceRegex);
+		if (referenceParts[1]) item.yearAsVolume = referenceParts[1];
+		if (referenceParts[2]) item.filingDate = referenceParts[2];
+		if (referenceParts[3]) item.reporterVolume = referenceParts[3];
+		if (referenceParts[4]) item.reporter = referenceParts[4];
+		if (referenceParts[5]) item.issue = referenceParts[5];
+		if (referenceParts[6]) item.firstPage = referenceParts[6];
+	}
+	if (canLII) {
+		item.filingDate = canLII[1];
+		item.archive = "CanLII";
+		item.archiveLocation = canLII[3];
+	}
+	item.id = id;
+	othervalues(doc,url,item,citationString);
+	return item;
+}
+
+function createMainCitationString(doc){
+	var citationString = doc.getElementsByClassName('documentMeta-citation')[0].nextElementSibling;
+	citationString = ZU.trimInternal(
+		ZU.xpathText(citationString, './node()[not(self::script)]', null, '') // We technically only use ./text() parts, but this is less confusing
+	);
+	return citationString;
+}
+
+function createOtherCitationString(doc){
+	return ZU.xpathText(doc, '//div[@id="documentMeta"]//div[contains(text(), "Other citations") or contains(text(), "Autres citations") or contains(text(), "Other citation") or contains(text(), "Autre citation")]/following-sibling::div');
+}
+
+function othervalues(doc,url,item,mainCitationString) {
+	item.language = doc.documentElement.lang;
+	ZU.setMultiField(item,"caseName",caseTitle(mainCitationString),item.language,item.language);
+	item.jurisdiction = caseJurisdiction(url);
+	item.court = caseCourt(item);
+	item.dateDecided = ZU.xpathText(doc, '//div[@id="documentMeta"]//div[contains(text(), "Date")]/following-sibling::div');
+	item.docketNumber = caseDocket(doc);
+	item.url = caseUrl(doc);	
+	caseAttachements(doc,url,item);
+}
+
 function createRelationship(items) {
 
 	idList = [];
 	for (item in items){
 		idList.push(items[item].id);
 	}
-	Zotero.debug(idList);
 	//Set bogus itemIDs in each item's seeAlso
 	// field (skipping the item's own ID)
 	for (id in idList) {
@@ -908,25 +900,27 @@ function doWeb(doc, url) {
 }
 
 
+
+
+
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
 		"type": "web",
-		"url": "https://www.canlii.org/fr/ca/csc/doc/2021/2021csc13/2021csc13.html",
+		"url": "https://www.canlii.org/en/on/onca/doc/2008/2008onca11/2008onca11.html",
 		"items": [
 			{
 				"itemType": "case",
-				"caseName": "R. c. Sheikh",
+				"caseName": "Fisher v. Fisher",
 				"creators": [],
-				"dateDecided": "2021-04-16",
-				"court": "supreme.court",
-				"docketNumber": "39372",
-				"documentNumber": "13",
-				"itemID": "0",
-				"jurisdiction": "ca",
-				"language": "fr",
-				"url": "https://canlii.ca/t/jfgrg",
-				"yearAsVolume": "2021",
+				"dateDecided": "2008-01-10",
+				"court": "court.appeal",
+				"docketNumber": "C45077",
+				"firstPage": "11",
+				"jurisdiction": "ca:on",
+				"language": "en",
+				"url": "https://canlii.ca/t/1vd4b",
+				"yearAsVolume": "2008",
 				"attachments": [
 					{
 						"title": "CanLII Full Text PDF",
@@ -940,110 +934,6 @@ var testCases = [
 				"tags": [],
 				"notes": [],
 				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
-		"url": "https://www.canlii.org/fr/ca/csc/doc/1990/1990canlii133/1990canlii133.html",
-		"items": [
-			{
-				"itemType": "case",
-				"caseName": "Mahe c. Alberta",
-				"creators": [],
-				"dateDecided": "1990-03-15",
-				"archive": "CanLII",
-				"archiveLocation": "133",
-				"court": "supreme.court",
-				"docketNumber": "20590",
-				"filingDate": "1990",
-				"firstPage": "342",
-				"itemID": "0",
-				"jurisdiction": "ca",
-				"language": "fr",
-				"reporter": "RCS",
-				"reporterVolume": "1",
-				"url": "https://canlii.ca/t/1fsz3",
-				"yearAsVolume": "1990",
-				"attachments": [
-					{
-						"title": "CanLII Full Text PDF",
-						"mimeType": "application/pdf"
-					},
-					{
-						"title": "CanLII Snapshot",
-						"mimeType": "text/html"
-					}
-				],
-				"tags": [],
-				"notes": [],
-				"seeAlso": []
-			}
-		]
-	},
-	{
-		"type": "web",
-		"url": "https://www.canlii.org/fr/ca/csc/doc/1990/1990canlii133/1990canlii133.html?autocompleteStr=mah%C3%A9&autocompletePos=1",
-		"items": [
-			{
-				"itemType": "case",
-				"caseName": "Mahe c. Alberta",
-				"creators": [],
-				"dateDecided": "1990-03-15",
-				"court": "supreme.court",
-				"docketNumber": "20590",
-				"firstPage": "133",
-				"itemID": "0",
-				"jurisdiction": "ca",
-				"language": "fr",
-				"reporter": "CanLII",
-				"url": "https://canlii.ca/t/1fsz3",
-				"attachments": [
-					{
-						"title": "CanLII Full Text PDF",
-						"mimeType": "application/pdf"
-					},
-					{
-						"title": "CanLII Snapshot",
-						"mimeType": "text/html"
-					}
-				],
-				"tags": [],
-				"notes": [],
-				"seeAlso": [
-					"1"
-				]
-			},
-			{
-				"itemType": "case",
-				"caseName": "Mahe c. Alberta",
-				"creators": [],
-				"dateDecided": "1990-03-15",
-				"court": "supreme.court",
-				"docketNumber": "20590",
-				"firstPage": "342",
-				"itemID": "1",
-				"jurisdiction": "ca",
-				"language": "fr",
-				"reporter": "RCS",
-				"reporterVolume": "1",
-				"url": "https://canlii.ca/t/1fsz3",
-				"yearAsVolume": "1990",
-				"attachments": [
-					{
-						"title": "CanLII Full Text PDF",
-						"mimeType": "application/pdf"
-					},
-					{
-						"title": "CanLII Snapshot",
-						"mimeType": "text/html"
-					}
-				],
-				"tags": [],
-				"notes": [],
-				"seeAlso": [
-					"0"
-				]
 			}
 		]
 	}
