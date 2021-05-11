@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2021-05-07 17:51:29"
+	"lastUpdated": "2021-05-11 18:20:39"
 }
 
 /*
@@ -615,25 +615,25 @@ var courtsDict = {
 
 function attr(docOrElem,selector,attr,index){var elem=index?docOrElem.querySelectorAll(selector).item(index):docOrElem.querySelector(selector);return elem?elem.getAttribute(attr):null;}function text(docOrElem,selector,index){var elem=index?docOrElem.querySelectorAll(selector).item(index):docOrElem.querySelector(selector);return elem?elem.textContent:null;}
 
-var canLiiRegexp = /https?:\/\/(?:www\.)?canlii\.org[^/]*\/(?:en|fr)\/[^/]+\/[^/]+\/doc\/.+/;
+var caseRegexp = /https?:\/\/(?:www\.)?canlii\.org[^/]*\/(?:en|fr)\/[^/]+\/[^/]+\/doc\/.+/;
+
+var statuteRegexp = /https?:\/\/(?:www\.)?canlii\.org[^/]*\/(?:en|fr)\/[^/]+\/(?:laws|legis)\/(?:stat|astat|lois|loisa)\/.+/;
+
+var regRegexp = /https?:\/\/(?:www\.)?canlii\.org[^/]*\/(?:en|fr)\/[^/]+\/(?:laws|legis)\/(?:regu|regl)\/.+/;
 
 function detectWeb(doc, url) {
-	if (canLiiRegexp.test(url)) {
-		return "case";
-	}
+	if (caseRegexp.test(url)) return "case";
+	else if (statuteRegexp.test(url)) return "statute";
+	else if (regRegexp.test(url)) return "regulation";
 	else {
 		var aTags = doc.getElementsByTagName("a");
 		for (var i = 0; i < aTags.length; i++) {
-			if (canLiiRegexp.test(aTags[i].href)) {
+			if (caseRegexp.test(aTags[i].href)) {
 				return "multiple";
 			}
 		}
 	}
 	return false;
-}
-
-function scrape(doc, url) {
-	items = caseReference(doc,url);
 }
 
 function buildReferenceArray(string,array){
@@ -656,8 +656,8 @@ function caseCourt(item) {
 	}
 }
 
-function caseJurisdiction(url){
-	var provinceRegex = /https?:\/\/(?:www\.)?canlii\.org[^/]*\/(?:en|fr)\/([^/]+)\/[^/]+\/doc\/.+/;
+function findJurisdiction(url){
+	var provinceRegex = /https?:\/\/(?:www\.)?canlii\.org[^/]*\/(?:en|fr)\/([^/]+)\/[^/]+\/.+/;
 	var provinceDetails = url.match(provinceRegex);
 	var province = provinceDetails[1];
 	if (province == 'ca') {
@@ -744,12 +744,12 @@ function caseBilingual(item,bilingual) {
 		altOtherCitationString = createOtherCitationString(altDoc);
 		altCaseName = caseTitle(altCitationString);
 		ZU.setMultiField(item,"caseName", altCaseName,altLang,item.language)
-		if (item.id && item.reporter) {
+		if (item.itemID && item.reporter) {
 			var referenceArray = [];
 			buildReferenceArray(altCitationString,referenceArray);
 			buildReferenceArray(altOtherCitationString,referenceArray);
 			var referenceObject = Object.assign({},referenceArray);
-			var altReference = referenceObject[item.id];
+			var altReference = referenceObject[item.itemID];
 			var referenceRegex =  /^(?:\[(\d{4})\]|(\d{4}))?\s?(?:(\d+)\s)?([\D]+?)(?:(?:(?:\s\(|\s(?:no\s))(\d+)(?:\w+\)\s|$|\s))|\s)(\d+)?(?:\(\w+\))?$/i;
 			altReporter = altReference.match(referenceRegex)[4];
 			ZU.setMultiField(item,"reporter", altReporter,altLang,item.language)
@@ -820,7 +820,7 @@ function createCaseReference(doc,url,reference,canLII,citationString,id) {
 		item.archive = "CanLII";
 		item.archiveLocation = canLII[3];
 	}
-	item.id = id;
+	item.itemID = id;
 	othervalues(doc,url,item,citationString);
 	return item;
 }
@@ -840,7 +840,7 @@ function createOtherCitationString(doc){
 function othervalues(doc,url,item,mainCitationString) {
 	item.language = doc.documentElement.lang;
 	ZU.setMultiField(item,"caseName",caseTitle(mainCitationString),item.language,item.language);
-	item.jurisdiction = caseJurisdiction(url);
+	item.jurisdiction = findJurisdiction(url);
 	item.court = caseCourt(item);
 	item.dateDecided = ZU.xpathText(doc, '//div[@id="documentMeta"]//div[contains(text(), "Date")]/following-sibling::div');
 	item.docketNumber = caseDocket(doc);
@@ -852,13 +852,13 @@ function createRelationship(items) {
 
 	idList = [];
 	for (item in items){
-		idList.push(items[item].id);
+		idList.push(items[item].itemID);
 	}
 	//Set bogus itemIDs in each item's seeAlso
 	// field (skipping the item's own ID)
 	for (id in idList) {
 		for (item in items) {
-			if (idList[id] === items[item].id) {
+			if (idList[id] === items[item].itemID) {
 				continue;
 			}
 			items[item].seeAlso.push("" + idList[id]);
@@ -881,11 +881,10 @@ function completeItems(items,doc) {
 }
 
 function doWeb(doc, url) {
-	if (canLiiRegexp.test(url)) {
-		scrape(doc, url);
-	}
+	if (caseRegexp.test(url)) caseReference(doc, url);
+	else if (statuteRegexp.test(url)) statuteReference(doc,url);
 	else {
-		var items = ZU.getItemArray(doc, doc, canLiiRegexp);
+		var items = ZU.getItemArray(doc, doc, caseRegexp);
 		Zotero.selectItems(items, function (items) {
 			if (!items) {
 				return;
@@ -894,12 +893,44 @@ function doWeb(doc, url) {
 			for (var i in items) {
 				articles.push(i);
 			}
-			ZU.processDocuments(articles, scrape);
+			ZU.processDocuments(articles, caseReference);
 		});
 	}
 }
 
+function statuteReference( doc, url) {
+	var item = new Zotero.Item("statute");
+	item.language = doc.documentElement.lang;
+	var metaInfo = ZU.trimInternal(ZU.xpathText(doc, '//*[@id="documentContainer"]/div[2]/h2')).split(", ");
+	ZU.setMultiField(item,"nameOfAct", metaInfo[0],item.language,item.language);
+	code = metaInfo[1].split(" ");
+	ZU.setMultiField(item,"code", code[0],item.language,item.language);
+	item.dateEnacted = code[1];
+	chapter = metaInfo[2].split(" ");
+	item.publicLawNumber = chapter[1];
+	if (chapter[2]) item.codeNumber = chapter[2][1];
+	item.url = ZU.xpathText(doc, '//*[@id="overview"]/div[1]/div[1]/div[2]/span/a');
+	item.jurisdiction = findJurisdiction(url);
+	var bilingual = doc.getElementById('languageSwitch');
+	if (bilingual) {		
+		statuteBilingual(item,bilingual);
+	}
+	else {
+		item.complete();
+	}
+}
 
+function statuteBilingual(item,bilingual) {
+	var altLang = caseAltLang(item);
+	var altLangUrl = 'https://www.canlii.org/'+attr(bilingual, '.canlii', 'href', 0);
+	Zotero.Utilities.processDocuments(altLangUrl, function(altDoc) {
+		var metaInfo = ZU.trimInternal(ZU.xpathText(altDoc, '//*[@id="documentContainer"]/div[2]/h2')).split(", ");
+		ZU.setMultiField(item,"nameOfAct", metaInfo[0],altLang,item.language);
+		code = metaInfo[1].split(" ");
+		ZU.setMultiField(item,"code", code[0],altLang,item.language);
+		item.complete();
+	});
+}
 
 
 
@@ -931,6 +962,70 @@ var testCases = [
 						"mimeType": "text/html"
 					}
 				],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/fr/ca/legis/lois/lrc-1985-c-c-46/derniere/lrc-1985-c-c-46.html",
+		"items": [
+			{
+				"itemType": "statute",
+				"nameOfAct": "Code criminel",
+				"creators": [],
+				"dateEnacted": "1985",
+				"code": "LRC",
+				"codeNumber": "C-46",
+				"jurisdiction": "ca",
+				"language": "fr",
+				"url": "https://canlii.ca/t/ckjd",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/fr/ca/legis/lois/lc-2019-c-10/derniere/lc-2019-c-10.html",
+		"items": [
+			{
+				"itemType": "statute",
+				"nameOfAct": "Loi canadienne sur l'Accessibilité",
+				"creators": [],
+				"dateEnacted": "2019",
+				"code": "LC",
+				"codeNumber": "10",
+				"jurisdiction": "ca",
+				"language": "fr",
+				"url": "https://canlii.ca/t/f6jp",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/en/ca/laws/stat/rsc-1985-c-31-4th-supp/latest/rsc-1985-c-31-4th-supp.html",
+		"items": [
+			{
+				"itemType": "statute",
+				"nameOfAct": "Official Languages Act",
+				"creators": [],
+				"dateEnacted": "1985",
+				"code": "RSC",
+				"codeNumber": "4",
+				"jurisdiction": "ca",
+				"language": "en",
+				"publicLawNumber": "31",
+				"url": "https://canlii.ca/t/7vbz",
+				"attachments": [],
 				"tags": [],
 				"notes": [],
 				"seeAlso": []
