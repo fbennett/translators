@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2021-05-11 18:20:39"
+	"lastUpdated": "2021-05-12 15:26:18"
 }
 
 /*
@@ -883,6 +883,7 @@ function completeItems(items,doc) {
 function doWeb(doc, url) {
 	if (caseRegexp.test(url)) caseReference(doc, url);
 	else if (statuteRegexp.test(url)) statuteReference(doc,url);
+	else if (regRegexp.test(url)) regulationReference(doc,url);
 	else {
 		var items = ZU.getItemArray(doc, doc, caseRegexp);
 		Zotero.selectItems(items, function (items) {
@@ -898,17 +899,23 @@ function doWeb(doc, url) {
 	}
 }
 
-function statuteReference( doc, url) {
+function statuteReference(doc, url) {
 	var item = new Zotero.Item("statute");
 	item.language = doc.documentElement.lang;
-	var metaInfo = ZU.trimInternal(ZU.xpathText(doc, '//*[@id="documentContainer"]/div[2]/h2')).split(", ");
-	ZU.setMultiField(item,"nameOfAct", metaInfo[0],item.language,item.language);
-	code = metaInfo[1].split(" ");
-	ZU.setMultiField(item,"code", code[0],item.language,item.language);
-	item.dateEnacted = code[1];
-	chapter = metaInfo[2].split(" ");
-	item.publicLawNumber = chapter[1];
-	if (chapter[2]) item.codeNumber = chapter[2][1];
+	var metaInfo = ZU.trimInternal(ZU.xpathText(doc, '//*[@id="documentContainer"]/div[2]/h2'));
+	var statuteRegex = /^([\s\S]+?)\,\s(\w+)(?:\s(\d+)\,)?\sc\s([\s\S]+?)?(?:\s\((\d)\w+\s\w+\))?$/;
+	// 1 : nameOfAct
+	// 2 : code
+	// 3 : dateEnacted
+	// 4 : publicLawNumber
+	// 5 : codeNumber
+
+	var infoParts = metaInfo.match(statuteRegex);
+	ZU.setMultiField(item,"nameOfAct", infoParts[1],item.language,item.language);
+	ZU.setMultiField(item,"code", infoParts[2],item.language,item.language);
+	if (infoParts[3]) item.dateEnacted = infoParts[3];
+	item.publicLawNumber = infoParts[4];
+	if (infoParts[5]) item.codeNumber = infoParts[5];
 	item.url = ZU.xpathText(doc, '//*[@id="overview"]/div[1]/div[1]/div[2]/span/a');
 	item.jurisdiction = findJurisdiction(url);
 	var bilingual = doc.getElementById('languageSwitch');
@@ -924,13 +931,76 @@ function statuteBilingual(item,bilingual) {
 	var altLang = caseAltLang(item);
 	var altLangUrl = 'https://www.canlii.org/'+attr(bilingual, '.canlii', 'href', 0);
 	Zotero.Utilities.processDocuments(altLangUrl, function(altDoc) {
-		var metaInfo = ZU.trimInternal(ZU.xpathText(altDoc, '//*[@id="documentContainer"]/div[2]/h2')).split(", ");
-		ZU.setMultiField(item,"nameOfAct", metaInfo[0],altLang,item.language);
-		code = metaInfo[1].split(" ");
-		ZU.setMultiField(item,"code", code[0],altLang,item.language);
+		var statuteRegex = /^([\s\S]+?)\,\s(\w+)(?:\s(\d+)\,)?\sc\s([\s\S]+?)?(?:\s\((\d)\w+\s\w+\))?$/;
+		// 1 : nameOfAct
+		// 2 : code
+		// 3 : dateEnacted
+		// 4 : publicLawNumber
+		// 5 : codeNumber
+
+		var altMetaInfo = ZU.trimInternal(ZU.xpathText(altDoc, '//*[@id="documentContainer"]/div[2]/h2'))
+		var altInfoParts = altMetaInfo.match(statuteRegex);
+		ZU.setMultiField(item,"nameOfAct", altInfoParts[1],altLang,item.language);
+		ZU.setMultiField(item,"code", altInfoParts[2],altLang,item.language);
 		item.complete();
 	});
 }
+
+function refulationReference(doc, url) {
+	var item = new Zotero.Item("statute");
+	item.language = doc.documentElement.lang;
+	var metaInfo = ZU.trimInternal(ZU.xpathText(doc, '//*[@id="documentContainer"]/div[2]/h2'));
+	var regulationRegex = /^([\s\S]+?)\,\s(?:(?:(CRC)\,\sc\s(\d+))|(?:(\w+)\/([\d\-]+?)))$/;
+	// 1 : nameOfAct
+
+	// If revised regulation
+	// 2 : code
+	// 3 : codeNumber
+
+	//If unrevised regulation
+	// 4 : code
+	// 5 : codeNumber
+
+	var infoParts = metaInfo.match(regulationRegex);
+	ZU.setMultiField(item,"nameOfAct", infoParts[1],item.language,item.language);
+	if (infoParts[3] && infoParts[4]) {
+		
+	}
+	
+	ZU.setMultiField(item,"code", infoParts[2],item.language,item.language);
+	if (infoParts[3]) item.dateEnacted = infoParts[3];
+	item.publicLawNumber = infoParts[4];
+	if (infoParts[5]) item.codeNumber = infoParts[5];
+	item.url = ZU.xpathText(doc, '//*[@id="overview"]/div[1]/div[1]/div[2]/span/a');
+	item.jurisdiction = findJurisdiction(url);
+	var bilingual = doc.getElementById('languageSwitch');
+	if (bilingual) {		
+		statuteBilingual(item,bilingual);
+	}
+	else {
+		item.complete();
+	}
+}
+
+function regulationBilingual(item,bilingual) {
+	var altLang = caseAltLang(item);
+	var altLangUrl = 'https://www.canlii.org/'+attr(bilingual, '.canlii', 'href', 0);
+	Zotero.Utilities.processDocuments(altLangUrl, function(altDoc) {
+		var statuteRegex = /^([\s\S]+?)\,\s(\w+)(?:\s(\d+)\,)?\sc\s([\s\S]+?)?(?:\s\((\d)\w+\s\w+\))?$/;
+		// 1 : nameOfAct
+		// 2 : code
+		// 3 : dateEnacted
+		// 4 : publicLawNumber
+		// 5 : codeNumber
+
+		var altMetaInfo = ZU.trimInternal(ZU.xpathText(altDoc, '//*[@id="documentContainer"]/div[2]/h2'))
+		var altInfoParts = altMetaInfo.match(statuteRegex);
+		ZU.setMultiField(item,"nameOfAct", altInfoParts[1],altLang,item.language);
+		ZU.setMultiField(item,"code", altInfoParts[2],altLang,item.language);
+		item.complete();
+	});
+}
+
 
 
 
@@ -978,9 +1048,9 @@ var testCases = [
 				"creators": [],
 				"dateEnacted": "1985",
 				"code": "LRC",
-				"codeNumber": "C-46",
 				"jurisdiction": "ca",
 				"language": "fr",
+				"publicLawNumber": "C-46",
 				"url": "https://canlii.ca/t/ckjd",
 				"attachments": [],
 				"tags": [],
@@ -999,9 +1069,9 @@ var testCases = [
 				"creators": [],
 				"dateEnacted": "2019",
 				"code": "LC",
-				"codeNumber": "10",
 				"jurisdiction": "ca",
 				"language": "fr",
+				"publicLawNumber": "10",
 				"url": "https://canlii.ca/t/f6jp",
 				"attachments": [],
 				"tags": [],
