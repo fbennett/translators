@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2021-05-12 15:26:18"
+	"lastUpdated": "2021-05-17 19:27:38"
 }
 
 /*
@@ -29,10 +29,6 @@
 	along with Zotero. If not, see <http://www.gnu.org/licenses/>.
 	***** END LICENSE BLOCK *****
 */
-
-
-// attr()/text() v2
-// eslint-disable-next-line
 
 var courtsDict = {
 	"ca": {
@@ -916,7 +912,7 @@ function statuteReference(doc, url) {
 	if (infoParts[3]) item.dateEnacted = infoParts[3];
 	item.publicLawNumber = infoParts[4];
 	if (infoParts[5]) item.codeNumber = infoParts[5];
-	item.url = ZU.xpathText(doc, '//*[@id="overview"]/div[1]/div[1]/div[2]/span/a');
+	item.url = doc.querySelector('.documentStaticUrl a');
 	item.jurisdiction = findJurisdiction(url);
 	var bilingual = doc.getElementById('languageSwitch');
 	if (bilingual) {		
@@ -946,36 +942,35 @@ function statuteBilingual(item,bilingual) {
 	});
 }
 
-function refulationReference(doc, url) {
-	var item = new Zotero.Item("statute");
+function regulationReference(doc, url) {
+	var item = new Zotero.Item("regulation");
 	item.language = doc.documentElement.lang;
 	var metaInfo = ZU.trimInternal(ZU.xpathText(doc, '//*[@id="documentContainer"]/div[2]/h2'));
-	var regulationRegex = /^([\s\S]+?)\,\s(?:(?:(CRC)\,\sc\s(\d+))|(?:(\w+)\/([\d\-]+?)))$/;
+	var regulationRegex = /^([\s\S]+?)\,\s([è\w\-]+?[\sA-Za-z\-\']+)(?:(?:\s|\/)?(?:(\d{2}|\d{4})\,?)?(?:\,?\sc\s([\w\-\.]+\,?))?)(?:(?:\s|\s[\wè]+\s|\-|\/)((?:EC)?\d+))?(?:(?:\/|\-)(\d+)(?:\s(R))?)?$/;
 	// 1 : nameOfAct
-
-	// If revised regulation
 	// 2 : code
-	// 3 : codeNumber
-
-	//If unrevised regulation
-	// 4 : code
+	// 3 : dateEnacted
+	// 4 : publicLawNumber
 	// 5 : codeNumber
+	// 6 : dateEnacted
+	// 7 : regulationType (revised manitoba)
 
 	var infoParts = metaInfo.match(regulationRegex);
 	ZU.setMultiField(item,"nameOfAct", infoParts[1],item.language,item.language);
-	if (infoParts[3] && infoParts[4]) {
-		
-	}
-	
 	ZU.setMultiField(item,"code", infoParts[2],item.language,item.language);
+
+
 	if (infoParts[3]) item.dateEnacted = infoParts[3];
-	item.publicLawNumber = infoParts[4];
+	else if (infoParts[6]) item.dateEnacted = infoParts[6];
+	if (infoParts[4]) item.publicLawNumber = infoParts[4];
 	if (infoParts[5]) item.codeNumber = infoParts[5];
-	item.url = ZU.xpathText(doc, '//*[@id="overview"]/div[1]/div[1]/div[2]/span/a');
+	if (infoParts[7]) item.regulationType = infoParts[7];
+
+	item.url = doc.querySelector('.documentStaticUrl a');
 	item.jurisdiction = findJurisdiction(url);
 	var bilingual = doc.getElementById('languageSwitch');
 	if (bilingual) {		
-		statuteBilingual(item,bilingual);
+		regulationBilingual(item,bilingual);
 	}
 	else {
 		item.complete();
@@ -986,20 +981,26 @@ function regulationBilingual(item,bilingual) {
 	var altLang = caseAltLang(item);
 	var altLangUrl = 'https://www.canlii.org/'+attr(bilingual, '.canlii', 'href', 0);
 	Zotero.Utilities.processDocuments(altLangUrl, function(altDoc) {
-		var statuteRegex = /^([\s\S]+?)\,\s(\w+)(?:\s(\d+)\,)?\sc\s([\s\S]+?)?(?:\s\((\d)\w+\s\w+\))?$/;
+		var regulationRegex = /^([\s\S]+?)\,\s([è\w\-]+?[\sA-Za-z\-\']+)(?:(?:\s|\/)?(?:(\d{2}|\d{4})\,?)?(?:\,?\sc\s([\w\-\.]+\,?))?)(?:(?:\s|\s[\wè]+\s|\-|\/)((?:EC)?\d+))?(?:(?:\/|\-)(\d+)(?:\s(R))?)?$/;
 		// 1 : nameOfAct
 		// 2 : code
 		// 3 : dateEnacted
 		// 4 : publicLawNumber
 		// 5 : codeNumber
+		// 6 : dateEnacted
 
 		var altMetaInfo = ZU.trimInternal(ZU.xpathText(altDoc, '//*[@id="documentContainer"]/div[2]/h2'))
-		var altInfoParts = altMetaInfo.match(statuteRegex);
+		var altInfoParts = altMetaInfo.match(regulationRegex);
 		ZU.setMultiField(item,"nameOfAct", altInfoParts[1],altLang,item.language);
 		ZU.setMultiField(item,"code", altInfoParts[2],altLang,item.language);
 		item.complete();
 	});
 }
+
+
+
+
+
 
 
 
@@ -1095,6 +1096,27 @@ var testCases = [
 				"language": "en",
 				"publicLawNumber": "31",
 				"url": "https://canlii.ca/t/7vbz",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/fr/ca/legis/regl/dors-96-383/94706/dors-96-383.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "Décret sur l'abandon et la poursuite des procédures, 1996",
+				"creators": [],
+				"dateEnacted": "96",
+				"code": "DORS",
+				"codeNumber": "383",
+				"jurisdiction": "ca",
+				"language": "fr",
+				"url": "https://canlii.ca/t/q0rj",
 				"attachments": [],
 				"tags": [],
 				"notes": [],
