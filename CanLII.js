@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2021-05-17 19:27:38"
+	"lastUpdated": "2021-06-29 18:30:16"
 }
 
 /*
@@ -899,7 +899,7 @@ function statuteReference(doc, url) {
 	var item = new Zotero.Item("statute");
 	item.language = doc.documentElement.lang;
 	var metaInfo = ZU.trimInternal(ZU.xpathText(doc, '//*[@id="documentContainer"]/div[2]/h2'));
-	var statuteRegex = /^([\s\S]+?)\,\s(\w+)(?:\s(\d+)\,)?\sc\s([\s\S]+?)?(?:\s\((\d)\w+\s\w+\))?$/;
+	var statuteRegex = /^([\s\S]+?)\,\s([\w\-]+)(?:\s(\d+)\,)?\sc\s([\s\S]+?)?(?:\s\((\d)\w+\s\w+\))?$/;
 	// 1 : nameOfAct
 	// 2 : code
 	// 3 : dateEnacted
@@ -996,6 +996,7 @@ function regulationBilingual(item,bilingual) {
 		item.complete();
 	});
 }
+
 
 
 
