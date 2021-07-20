@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2021-05-17 19:27:38"
+	"lastUpdated": "2021-07-09 20:04:55"
 }
 
 /*
@@ -115,7 +115,7 @@ var courtsDict = {
 		language: {
 			"en": {
 				court: {
-					"Court of Appeal": {
+					"Court of Appeal of Alberta": {
 						LRRName: "court.appeal",
 						start: "1998-01-01"
 					},
@@ -131,7 +131,7 @@ var courtsDict = {
 			},
 			"fr": {
 				court: {
-					"Cour d'appel": {
+					"Cour d'appel de l'Alberta": {
 						LRRName: "court.appeal",
 						start: "1998-01-01"
 					},
@@ -151,7 +151,7 @@ var courtsDict = {
 		language: {
 			"en": {
 				court: {
-					"Court of Appeal": {
+					"Court of Appeal for British Columbia": {
 						LRRName: "court.appeal",
 						start: "1999-01-01"
 					},
@@ -164,6 +164,20 @@ var courtsDict = {
 						start: "1999-02-01"
 					}
 				}
+			},
+			"fr": {
+					"Cour d'appel de la Colombie-Britannique": {
+						LRRName: "court.appeal",
+						start: "1999-01-01"
+					},
+					"Supreme Court of British Columbia": {
+						LRRName: "supreme.court.prov",
+						start: "2000-01-01"
+					},
+					"Provincial Court of British Columbia": {
+						LRRName: "provincial.court",
+						start: "1999-02-01"
+					}
 			}
 		}
 	},
@@ -171,7 +185,7 @@ var courtsDict = {
 		language: {
 			"en": {
 				court: {
-					"Court of Appeal": {
+					"Court of Appeal of Manitoba": {
 						LRRName: "court.appeal",
 						start: "2000-03-01"
 					},
@@ -187,7 +201,7 @@ var courtsDict = {
 			},
 			"fr": {
 				court: {
-					"Cour d'appel": {
+					"Cour d'appel du Manitoba": {
 						LRRName: "court.appeal",
 						start: "2000-03-01"
 					},
@@ -451,7 +465,7 @@ var courtsDict = {
 		language: {
 			"en": {
 				court: {
-					"Court of Appeal": {
+					"Court of Appeal of Quebec": {
 						LRRName: "court.appeal",
 						start: "2005-01-01"
 					},
@@ -531,7 +545,7 @@ var courtsDict = {
 						LRRName: "court.queens.bench",
 						start: ""
 					},
-					"Saskatchewan Surrogate Court": {
+					"Saskatchewan Unified Family Court": {
 						LRRName: "court.queens.bench",
 						start: ""
 					}
@@ -555,7 +569,7 @@ var courtsDict = {
 						LRRName: "court.queens.bench",
 						start: ""
 					},
-					"Saskatchewan Surrogate Court": {
+					"Saskatchewan Unified Family Court": {
 						LRRName: "court.queens.bench",
 						start: ""
 					}
@@ -567,7 +581,7 @@ var courtsDict = {
 		language: {
 			"en": {
 				court: {
-					"Court of Appeal": {
+					"Court of Appeal of Yukon": {
 						LRRName: "court.appeal",
 						start: "2000-03-01"
 					},
@@ -587,7 +601,7 @@ var courtsDict = {
 			},
 			"fr": {
 				court: {
-					"Cour d'appel": {
+					"Cour d'appel du Yukon": {
 						LRRName: "court.appeal",
 						start: "2000-03-01"
 					},
@@ -899,7 +913,7 @@ function statuteReference(doc, url) {
 	var item = new Zotero.Item("statute");
 	item.language = doc.documentElement.lang;
 	var metaInfo = ZU.trimInternal(ZU.xpathText(doc, '//*[@id="documentContainer"]/div[2]/h2'));
-	var statuteRegex = /^([\s\S]+?)\,\s(\w+)(?:\s(\d+)\,)?\sc\s([\s\S]+?)?(?:\s\((\d)\w+\s\w+\))?$/;
+	var statuteRegex = /^([\s\S]+?)\,\s([\w\-]+)(?:\s(\d+)\,)?\sc\s([\s\S]+?)?(?:\s\((\d)\w+\s\w+\))?$/;
 	// 1 : nameOfAct
 	// 2 : code
 	// 3 : dateEnacted
@@ -996,6 +1010,7 @@ function regulationBilingual(item,bilingual) {
 		item.complete();
 	});
 }
+
 
 
 
