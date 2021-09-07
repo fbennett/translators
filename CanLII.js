@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2021-07-09 20:04:55"
+	"lastUpdated": "2021-09-07 14:37:51"
 }
 
 /*
@@ -753,7 +753,7 @@ function caseBilingual(item,bilingual) {
 		altCitationString = createMainCitationString(altDoc);
 		altOtherCitationString = createOtherCitationString(altDoc);
 		altCaseName = caseTitle(altCitationString);
-		ZU.setMultiField(item,"caseName", altCaseName,altLang,item.language)
+		ZU.setMultiField(item,"caseName", altCaseName,altLang,item.language);
 		if (item.itemID && item.reporter) {
 			var referenceArray = [];
 			buildReferenceArray(altCitationString,referenceArray);
@@ -764,6 +764,7 @@ function caseBilingual(item,bilingual) {
 			altReporter = altReference.match(referenceRegex)[4];
 			ZU.setMultiField(item,"reporter", altReporter,altLang,item.language)
 		}
+		item.language = "";
 		item.complete();
 	});
 }
@@ -1010,6 +1011,7 @@ function regulationBilingual(item,bilingual) {
 		item.complete();
 	});
 }
+
 
 
 
