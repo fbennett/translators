@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2021-09-07 14:37:51"
+	"lastUpdated": "2021-09-20 13:59:26"
 }
 
 /*
@@ -918,15 +918,15 @@ function statuteReference(doc, url) {
 	// 1 : nameOfAct
 	// 2 : code
 	// 3 : dateEnacted
-	// 4 : publicLawNumber
-	// 5 : codeNumber
+	// 4 : codeNumber
+	// 5 : publicLawNumber
 
 	var infoParts = metaInfo.match(statuteRegex);
 	ZU.setMultiField(item,"nameOfAct", infoParts[1],item.language,item.language);
 	ZU.setMultiField(item,"code", infoParts[2],item.language,item.language);
 	if (infoParts[3]) item.dateEnacted = infoParts[3];
-	item.publicLawNumber = infoParts[4];
-	if (infoParts[5]) item.codeNumber = infoParts[5];
+	item.codeNumber = infoParts[4];
+	if (infoParts[5]) item.publicLawNumber = infoParts[5];
 	item.url = doc.querySelector('.documentStaticUrl a');
 	item.jurisdiction = findJurisdiction(url);
 	var bilingual = doc.getElementById('languageSwitch');
@@ -942,12 +942,12 @@ function statuteBilingual(item,bilingual) {
 	var altLang = caseAltLang(item);
 	var altLangUrl = 'https://www.canlii.org/'+attr(bilingual, '.canlii', 'href', 0);
 	Zotero.Utilities.processDocuments(altLangUrl, function(altDoc) {
-		var statuteRegex = /^([\s\S]+?)\,\s(\w+)(?:\s(\d+)\,)?\sc\s([\s\S]+?)?(?:\s\((\d)\w+\s\w+\))?$/;
+		var statuteRegex = /^([\s\S]+?)\,\s([\w\-]+)(?:\s(\d+)\,)?\sc\s([\s\S]+?)?(?:\s\((\d)\w+\s\w+\))?$/
 		// 1 : nameOfAct
 		// 2 : code
 		// 3 : dateEnacted
-		// 4 : publicLawNumber
-		// 5 : codeNumber
+		// 4 : codeNumber
+		// 5 : publiclawNumber
 
 		var altMetaInfo = ZU.trimInternal(ZU.xpathText(altDoc, '//*[@id="documentContainer"]/div[2]/h2'))
 		var altInfoParts = altMetaInfo.match(statuteRegex);
