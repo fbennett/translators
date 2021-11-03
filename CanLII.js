@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2021-09-20 13:59:26"
+	"lastUpdated": "2021-11-03 15:48:36"
 }
 
 /*
@@ -914,20 +914,23 @@ function statuteReference(doc, url) {
 	var item = new Zotero.Item("statute");
 	item.language = doc.documentElement.lang;
 	var metaInfo = ZU.trimInternal(ZU.xpathText(doc, '//*[@id="documentContainer"]/div[2]/h2'));
-	var statuteRegex = /^([\s\S]+?)\,\s([\w\-]+)(?:\s(\d+)\,)?\sc\s([\s\S]+?)?(?:\s\((\d)\w+\s\w+\))?$/;
+	var statuteRegex = /^([\s\S]+?)\,\s([\w\-]+(?:\s\d+)?)\,?\sc\s([\s\S]+?)?(?:\s\((\d)\w+\s\w+\))?(?:\,\s\w+?\s(\d+))?$/;
 	// 1 : nameOfAct
 	// 2 : code
-	// 3 : dateEnacted
-	// 4 : codeNumber
-	// 5 : publicLawNumber
+	// 3 : codeNumber (chapter)
+	// 4 : publicLawNumber (supplement)
+	// 5 : section (law-within-law)
 
 	var infoParts = metaInfo.match(statuteRegex);
 	ZU.setMultiField(item,"nameOfAct", infoParts[1],item.language,item.language);
 	ZU.setMultiField(item,"code", infoParts[2],item.language,item.language);
-	if (infoParts[3]) item.dateEnacted = infoParts[3];
-	item.codeNumber = infoParts[4];
-	if (infoParts[5]) item.publicLawNumber = infoParts[5];
-	item.url = doc.querySelector('.documentStaticUrl a');
+	item.codeNumber = infoParts[3];
+	if (infoParts[4]) item.publicLawNumber = infoParts[4];
+	if (infoParts[5]) item.section = infoParts[5];
+	item.url = ZU.xpathText(doc, "(//span[@class='documentStaticUrl'])[2]");
+	var versionString = ZU.xpathText(doc, '//h3[contains(text(), "Current version:") or contains(text(), "Version courante")]');
+	var versionRegex = /([û\w\d]+\s[û\w\d]+[\,\.]?\s\d+)$/
+	item.dateAmended = versionString.match(versionRegex)[1];
 	item.jurisdiction = findJurisdiction(url);
 	var bilingual = doc.getElementById('languageSwitch');
 	if (bilingual) {		
@@ -942,12 +945,12 @@ function statuteBilingual(item,bilingual) {
 	var altLang = caseAltLang(item);
 	var altLangUrl = 'https://www.canlii.org/'+attr(bilingual, '.canlii', 'href', 0);
 	Zotero.Utilities.processDocuments(altLangUrl, function(altDoc) {
-		var statuteRegex = /^([\s\S]+?)\,\s([\w\-]+)(?:\s(\d+)\,)?\sc\s([\s\S]+?)?(?:\s\((\d)\w+\s\w+\))?$/
+		var statuteRegex = /^([\s\S]+?)\,\s([\w\-]+(?:\s\d+)?)\,?\sc\s([\s\S]+?)?(?:\s\((\d)\w+\s\w+\))?(?:\,\s\w+?\s(\d+))?$/
 		// 1 : nameOfAct
 		// 2 : code
-		// 3 : dateEnacted
-		// 4 : codeNumber
-		// 5 : publiclawNumber
+		// 3 : codeNumber (chapter)
+		// 4 : publicLawNumber (supplement)
+		// 5 : section (law-within-law)
 
 		var altMetaInfo = ZU.trimInternal(ZU.xpathText(altDoc, '//*[@id="documentContainer"]/div[2]/h2'))
 		var altInfoParts = altMetaInfo.match(statuteRegex);
@@ -961,12 +964,12 @@ function regulationReference(doc, url) {
 	var item = new Zotero.Item("regulation");
 	item.language = doc.documentElement.lang;
 	var metaInfo = ZU.trimInternal(ZU.xpathText(doc, '//*[@id="documentContainer"]/div[2]/h2'));
-	var regulationRegex = /^([\s\S]+?)\,\s([è\w\-]+?[\sA-Za-z\-\']+)(?:(?:\s|\/)?(?:(\d{2}|\d{4})\,?)?(?:\,?\sc\s([\w\-\.]+\,?))?)(?:(?:\s|\s[\wè]+\s|\-|\/)((?:EC)?\d+))?(?:(?:\/|\-)(\d+)(?:\s(R))?)?$/;
+	var regulationRegex = /^([\s\S]+?)\,\s((?:Règl(?:\sdu\s|\sdes\s|\sde\sl\'|\s)[A-Za-z\-]+)|(?:[A-Za-z\-]+\sReg)|(?:[A-Za-z\-]+))(?:(?:\s|\/)?(?:(\d{2}|\d{4})\,?)?(?:\,?\sc\s(?:([\w\-\.]+)\,?))?)(?:(?:\s|\s[\wè]+\s|\-|\/)((?:EC)?\d+))?(?:(?:\/|\-)(\d+)(?:\s(R))?)?$/;
 	// 1 : nameOfAct
 	// 2 : code
 	// 3 : dateEnacted
-	// 4 : publicLawNumber
-	// 5 : codeNumber
+	// 4 : codeNumber
+	// 5 : publicLawNumber
 	// 6 : dateEnacted
 	// 7 : regulationType (revised manitoba)
 
@@ -975,14 +978,20 @@ function regulationReference(doc, url) {
 	ZU.setMultiField(item,"code", infoParts[2],item.language,item.language);
 
 
-	if (infoParts[3]) item.dateEnacted = infoParts[3];
-	else if (infoParts[6]) item.dateEnacted = infoParts[6];
-	if (infoParts[4]) item.publicLawNumber = infoParts[4];
-	if (infoParts[5]) item.codeNumber = infoParts[5];
+	if (infoParts[3]) {
+		item.codeNumber = infoParts[3];
+		if (infoParts[4]) item.publicLawNumber = infoParts[4];
+	}
+	else if (infoParts[6]) item.codeNumber = infoParts[6];
+	else if (infoParts[4]) item.codeNumber = infoParts[4];
+	if (infoParts[5]) item.publicLawNumber = infoParts[5];
 	if (infoParts[7]) item.regulationType = infoParts[7];
 
-	item.url = doc.querySelector('.documentStaticUrl a');
+	item.url = ZU.xpathText(doc, "//div[normalize-space()='Citation to this version:' or normalize-space()='Référence à cette version :']/following-sibling::div/a")
 	item.jurisdiction = findJurisdiction(url);
+	
+	item.regulationType = checkIfRevised(Zotero.Utilities.trimInternal(item.code),item.regulationType);
+
 	var bilingual = doc.getElementById('languageSwitch');
 	if (bilingual) {		
 		regulationBilingual(item,bilingual);
@@ -992,11 +1001,19 @@ function regulationReference(doc, url) {
 	}
 }
 
+function checkIfRevised(code,type) {
+	const revisedCodes = ['CRC', 'RRO', 'RLRQ', 'RRS', 'CNLR', 'RRTN-O', 'CRC', 'CNR', 'RRNWT', 'CQLR'];
+
+	if (type || revisedCodes.includes(code)) {
+		return "Revised";
+	}
+}
+
 function regulationBilingual(item,bilingual) {
 	var altLang = caseAltLang(item);
 	var altLangUrl = 'https://www.canlii.org/'+attr(bilingual, '.canlii', 'href', 0);
 	Zotero.Utilities.processDocuments(altLangUrl, function(altDoc) {
-		var regulationRegex = /^([\s\S]+?)\,\s([è\w\-]+?[\sA-Za-z\-\']+)(?:(?:\s|\/)?(?:(\d{2}|\d{4})\,?)?(?:\,?\sc\s([\w\-\.]+\,?))?)(?:(?:\s|\s[\wè]+\s|\-|\/)((?:EC)?\d+))?(?:(?:\/|\-)(\d+)(?:\s(R))?)?$/;
+		var regulationRegex = /^([\s\S]+?)\,\s((?:Règl(?:\sdu\s|\sdes\s|\sde\sl\'|\s)[A-Za-z\-]+)|(?:[A-Za-z\-]+\sReg)|(?:[A-Za-z\-]+))(?:(?:\s|\/)?(?:(\d{2}|\d{4})\,?)?(?:\,?\sc\s(?:([\w\-\.]+)\,?))?)(?:(?:\s|\s[\wè]+\s|\-|\/)((?:EC)?\d+))?(?:(?:\/|\-)(\d+)(?:\s(R))?)?$/;
 		// 1 : nameOfAct
 		// 2 : code
 		// 3 : dateEnacted
@@ -1011,6 +1028,18 @@ function regulationBilingual(item,bilingual) {
 		item.complete();
 	});
 }
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
@@ -1064,12 +1093,12 @@ var testCases = [
 				"itemType": "statute",
 				"nameOfAct": "Code criminel",
 				"creators": [],
-				"dateEnacted": "1985",
-				"code": "LRC",
+				"code": "LRC 1985",
+				"codeNumber": "C-46",
+				"dateAmended": "27 août 2021",
 				"jurisdiction": "ca",
 				"language": "fr",
-				"publicLawNumber": "C-46",
-				"url": "https://canlii.ca/t/ckjd",
+				"url": "https://canlii.ca/t/6d6rm",
 				"attachments": [],
 				"tags": [],
 				"notes": [],
@@ -1085,12 +1114,12 @@ var testCases = [
 				"itemType": "statute",
 				"nameOfAct": "Loi canadienne sur l'Accessibilité",
 				"creators": [],
-				"dateEnacted": "2019",
-				"code": "LC",
+				"code": "LC 2019",
+				"codeNumber": "10",
+				"dateAmended": "11 juil. 2019",
 				"jurisdiction": "ca",
 				"language": "fr",
-				"publicLawNumber": "10",
-				"url": "https://canlii.ca/t/f6jp",
+				"url": "https://canlii.ca/t/6c45w",
 				"attachments": [],
 				"tags": [],
 				"notes": [],
@@ -1106,13 +1135,13 @@ var testCases = [
 				"itemType": "statute",
 				"nameOfAct": "Official Languages Act",
 				"creators": [],
-				"dateEnacted": "1985",
-				"code": "RSC",
-				"codeNumber": "4",
+				"code": "RSC 1985",
+				"codeNumber": "31",
+				"dateAmended": "Sep 21, 2017",
 				"jurisdiction": "ca",
 				"language": "en",
-				"publicLawNumber": "31",
-				"url": "https://canlii.ca/t/7vbz",
+				"publicLawNumber": "4",
+				"url": "https://canlii.ca/t/530sl",
 				"attachments": [],
 				"tags": [],
 				"notes": [],
@@ -1122,18 +1151,723 @@ var testCases = [
 	},
 	{
 		"type": "web",
-		"url": "https://www.canlii.org/fr/ca/legis/regl/dors-96-383/94706/dors-96-383.html",
+		"url": "https://www.canlii.org/en/nt/laws/regu/nwt-reg-089-2019/160878/nwt-reg-089-2019.html",
 		"items": [
 			{
 				"itemType": "regulation",
-				"nameOfAct": "Décret sur l'abandon et la poursuite des procédures, 1996",
+				"nameOfAct": "9-1-1 Regulations",
 				"creators": [],
-				"dateEnacted": "96",
+				"code": "NWT Reg",
+				"codeNumber": "2019",
+				"jurisdiction": "ca:nt",
+				"language": "en",
+				"publicLawNumber": "089",
+				"url": "https://canlii.ca/t/5435x",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/en/on/laws/regu/rro-1990-reg-629/105555/rro-1990-reg-629.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "Accessible Vehicles",
+				"creators": [],
+				"code": "RRO",
+				"codeNumber": "1990",
+				"jurisdiction": "ca:on",
+				"language": "en",
+				"publicLawNumber": "629",
+				"regulationType": "Revised",
+				"url": "https://canlii.ca/t/521pt",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/en/ca/laws/regu/sor-2000-111/91604/sor-2000-111.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "Canadian Aviation Security Regulations",
+				"creators": [],
+				"code": "SOR",
+				"codeNumber": "2000",
+				"jurisdiction": "ca",
+				"language": "en",
+				"publicLawNumber": "111",
+				"url": "https://canlii.ca/t/l66s",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/fr/on/legis/regl/regl-de-lont-426-06/128567/regl-de-lont-426-06.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "Compteurs intelligents : Recouvrement des frais",
+				"creators": [],
+				"code": "Règl de l'Ont",
+				"codeNumber": "06",
+				"jurisdiction": "ca:on",
+				"language": "fr",
+				"publicLawNumber": "426",
+				"shortTitle": "Compteurs intelligents",
+				"url": "https://canlii.ca/t/69xd7",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/en/mb/laws/regu/man-reg-468-88-r/187073/man-reg-468-88-r.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "Education Administration Miscellaneous Provisions Regulation",
+				"creators": [],
+				"code": "Man Reg",
+				"codeNumber": "88",
+				"jurisdiction": "ca:mb",
+				"language": "en",
+				"publicLawNumber": "468",
+				"regulationType": "Revised",
+				"url": "https://canlii.ca/t/55293",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/en/nt/laws/regu/rrnwt-1990-c-e-27/70008/rrnwt-1990-c-e-27.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "Explosives Regulations",
+				"creators": [],
+				"code": "RRNWT",
+				"codeNumber": "1990",
+				"jurisdiction": "ca:nt",
+				"language": "en",
+				"publicLawNumber": "E-27",
+				"regulationType": "Revised",
+				"url": "https://canlii.ca/t/kd6x",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/en/pe/laws/regu/pei-reg-ec564-02/178495/pei-reg-ec564-02.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "Freedom of Information and Protection of Privacy Act General Regulations",
+				"creators": [],
+				"code": "PEI Reg",
+				"codeNumber": "02",
+				"jurisdiction": "ca:pe",
+				"language": "en",
+				"publicLawNumber": "EC564",
+				"url": "https://canlii.ca/t/54qr5",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/en/nb/laws/regu/nb-reg-2000-8/137581/nb-reg-2000-8.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "General Regulation",
+				"creators": [],
+				"code": "NB Reg",
+				"codeNumber": "2000",
+				"jurisdiction": "ca:nb",
+				"language": "en",
+				"publicLawNumber": "8",
+				"url": "https://canlii.ca/t/5379c",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/en/bc/laws/regu/bc-reg-241-2016/189727/bc-reg-241-2016.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "Liquor Control and Licensing Regulation",
+				"creators": [],
+				"code": "BC Reg",
+				"codeNumber": "2016",
+				"jurisdiction": "ca:bc",
+				"language": "en",
+				"publicLawNumber": "241",
+				"url": "https://canlii.ca/t/5557k",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/en/mb/laws/regu/man-reg-155-2003/66372/man-reg-155-2003.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "Manitoba Drug Interchangeability Formulary Regulation",
+				"creators": [],
+				"code": "Man Reg",
+				"codeNumber": "2003",
+				"jurisdiction": "ca:mb",
+				"language": "en",
+				"publicLawNumber": "155",
+				"url": "https://canlii.ca/t/k85q",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/en/ca/laws/regu/crc-c-1035/168245/crc-c-1035.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "Migratory Birds Regulations",
+				"creators": [],
+				"code": "CRC",
+				"codeNumber": "1035",
+				"jurisdiction": "ca",
+				"language": "en",
+				"regulationType": "Revised",
+				"url": "https://canlii.ca/t/54cch",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/en/sk/laws/regu/rrs-c-c-50.2-reg-21/10002/rrs-c-c-50.2-reg-21.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "Oil and Gas Disposition Credit Regulations, 2000 (No. 3)",
+				"creators": [],
+				"code": "RRS",
+				"codeNumber": "C-50.2",
+				"jurisdiction": "ca:sk",
+				"language": "en",
+				"publicLawNumber": "21",
+				"regulationType": "Revised",
+				"url": "https://canlii.ca/t/h5jq",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/en/ns/laws/regu/ns-reg-24-2000/116394/ns-reg-24-2000.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "Onshore Petroleum Geophysical Exploration Regulations",
+				"creators": [],
+				"code": "NS Reg",
+				"codeNumber": "24",
+				"jurisdiction": "ca:ns",
+				"language": "en",
+				"publicLawNumber": "2000",
+				"url": "https://canlii.ca/t/52fr4",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/en/ab/laws/regu/alta-reg-184-2001/167807/alta-reg-184-2001.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "Pest and Nuisance Control Regulation",
+				"creators": [],
+				"code": "Alta Reg",
+				"codeNumber": "2001",
+				"jurisdiction": "ca:ab",
+				"language": "en",
+				"publicLawNumber": "184",
+				"url": "https://canlii.ca/t/54bvw",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/en/nl/laws/regu/nlr-78-99/189512/nlr-78-99.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "Provincial Offences Ticket Regulations, 1999",
+				"creators": [],
+				"code": "NLR",
+				"codeNumber": "78",
+				"jurisdiction": "ca:nl",
+				"language": "en",
+				"publicLawNumber": "99",
+				"url": "https://canlii.ca/t/5550d",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/fr/ca/legis/regl/dors-2000-111/91604/dors-2000-111.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "Règlement canadien sur la sûreté aérienne",
+				"creators": [],
 				"code": "DORS",
-				"codeNumber": "383",
+				"codeNumber": "2000",
 				"jurisdiction": "ca",
 				"language": "fr",
-				"url": "https://canlii.ca/t/q0rj",
+				"publicLawNumber": "111",
+				"url": "https://canlii.ca/t/pwb4",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/fr/nb/legis/regl/regl-du-n-b-2000-8/137581/regl-du-n-b-2000-8.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "Règlement général",
+				"creators": [],
+				"code": "Règl du N-B",
+				"codeNumber": "2000",
+				"jurisdiction": "ca:nb",
+				"language": "fr",
+				"publicLawNumber": "8",
+				"url": "https://canlii.ca/t/6b8dp",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/fr/mb/legis/regl/regl-du-man-468-88-r/187073/regl-du-man-468-88-r.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "Règlement sur l'administration scolaire et les écoles publiques",
+				"creators": [],
+				"code": "Règl du Man",
+				"codeNumber": "88",
+				"jurisdiction": "ca:mb",
+				"language": "fr",
+				"publicLawNumber": "468",
+				"regulationType": "Revised",
+				"url": "https://canlii.ca/t/6d3df",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/fr/nu/legis/regl/regl-nu-045-1999/72702/regl-nu-045-1999.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "Règlement sur l'heure avancée et les fuseaux horaires",
+				"creators": [],
+				"code": "Règl Nu",
+				"codeNumber": "1999",
+				"jurisdiction": "ca:nu",
+				"language": "fr",
+				"publicLawNumber": "045",
+				"url": "https://canlii.ca/t/p6b2",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/fr/qc/legis/regl/rlrq-c-c-11-r-9/127994/rlrq-c-c-11-r-9.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "Règlement sur la langue du commerce et des affaires",
+				"creators": [],
+				"code": "RLRQ",
+				"codeNumber": "C-11",
+				"jurisdiction": "ca:qc",
+				"language": "fr",
+				"publicLawNumber": "9",
+				"regulationType": "Revised",
+				"url": "https://canlii.ca/t/69wr4",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/fr/mb/legis/regl/regl-du-man-155-2003/66372/regl-du-man-155-2003.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "Règlement sur la liste des médicaments interchangeables pour le Manitoba",
+				"creators": [],
+				"code": "Règl du Man",
+				"codeNumber": "2003",
+				"jurisdiction": "ca:mb",
+				"language": "fr",
+				"publicLawNumber": "155",
+				"url": "https://canlii.ca/t/nz92",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/fr/qc/legis/regl/d-784-82/25180/d-784-82.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "Règlement sur la publicité de l'Ordre des dentistes du Québec",
+				"creators": [],
+				"code": "D",
+				"codeNumber": "82",
+				"jurisdiction": "ca:qc",
+				"language": "fr",
+				"publicLawNumber": "784",
+				"url": "https://canlii.ca/t/mfj0",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/fr/nt/legis/regl/regl-des-tn-o-089-2019/160878/regl-des-tn-o-089-2019.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "Règlement sur le service d'urgence 911",
+				"creators": [],
+				"code": "Règl des TN-O",
+				"codeNumber": "2019",
+				"jurisdiction": "ca:nt",
+				"language": "fr",
+				"publicLawNumber": "089",
+				"url": "https://canlii.ca/t/6c498",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/fr/nt/legis/regl/rrtn-o-1990-c-e-27/70008/rrtn-o-1990-c-e-27.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "Règlement sur les explosifs",
+				"creators": [],
+				"code": "RRTN-O",
+				"codeNumber": "1990",
+				"jurisdiction": "ca:nt",
+				"language": "fr",
+				"publicLawNumber": "E-27",
+				"regulationType": "Revised",
+				"url": "https://canlii.ca/t/p3b8",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/fr/ca/legis/regl/crc-c-1035/168245/crc-c-1035.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "Règlement sur les oiseaux migrateurs",
+				"creators": [],
+				"code": "CRC",
+				"codeNumber": "1035",
+				"jurisdiction": "ca",
+				"language": "fr",
+				"regulationType": "Revised",
+				"url": "https://canlii.ca/t/6cdgt",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/en/qc/laws/regu/oc-784-82/25180/oc-784-82.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "Regulation respecting advertising of the Ordre des dentistes du Québec",
+				"creators": [],
+				"code": "OC",
+				"codeNumber": "82",
+				"jurisdiction": "ca:qc",
+				"language": "en",
+				"publicLawNumber": "784",
+				"url": "https://canlii.ca/t/hqdn",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/en/qc/laws/regu/cqlr-c-c-11-r-9/127994/cqlr-c-c-11-r-9.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "Regulation respecting the language of commerce and business",
+				"creators": [],
+				"code": "CQLR",
+				"codeNumber": "C-11",
+				"jurisdiction": "ca:qc",
+				"language": "en",
+				"publicLawNumber": "9",
+				"regulationType": "Revised",
+				"url": "https://canlii.ca/t/52vms",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/en/yk/laws/regu/yoic-2000-130/186360/yoic-2000-130.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "Remuneration - Election Officers Regulation",
+				"creators": [],
+				"code": "YOIC",
+				"codeNumber": "2000",
+				"jurisdiction": "ca:yk",
+				"language": "en",
+				"publicLawNumber": "130",
+				"url": "https://canlii.ca/t/551hb",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/fr/yk/legis/regl/yd-2000-130/186360/yd-2000-130.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "Rémunération - Règlement sur les officiers d'élection",
+				"creators": [],
+				"code": "YD",
+				"codeNumber": "2000",
+				"jurisdiction": "ca:yk",
+				"language": "fr",
+				"publicLawNumber": "130",
+				"url": "https://canlii.ca/t/6d2ln",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/en/on/laws/regu/o-reg-426-06/128567/o-reg-426-06.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "Smart Meters: Cost Recovery",
+				"creators": [],
+				"code": "O Reg",
+				"codeNumber": "06",
+				"jurisdiction": "ca:on",
+				"language": "en",
+				"publicLawNumber": "426",
+				"shortTitle": "Smart Meters",
+				"url": "https://canlii.ca/t/52w8w",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/en/sk/laws/regu/sask-reg-541-67/130880/sask-reg-541-67.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "The Subsurface Mineral Regulations, 1960",
+				"creators": [],
+				"code": "Sask Reg",
+				"codeNumber": "67",
+				"jurisdiction": "ca:sk",
+				"language": "en",
+				"publicLawNumber": "541",
+				"url": "https://canlii.ca/t/52zv0",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/en/nu/laws/regu/nu-reg-045-99/72702/nu-reg-045-99.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "Time Zone and Daylight Saving Time Regulations",
+				"creators": [],
+				"code": "Nu Reg",
+				"codeNumber": "99",
+				"jurisdiction": "ca:nu",
+				"language": "en",
+				"publicLawNumber": "045",
+				"url": "https://canlii.ca/t/kh6q",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/en/nl/laws/regu/cnlr-331-96/60902/cnlr-331-96.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "Town of Old Perlican Order",
+				"creators": [],
+				"code": "CNLR",
+				"codeNumber": "96",
+				"jurisdiction": "ca:nl",
+				"language": "en",
+				"publicLawNumber": "331",
+				"regulationType": "Revised",
+				"url": "https://canlii.ca/t/k23d",
+				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/fr/on/legis/regl/rro-1990-regl-629/105555/rro-1990-regl-629.html",
+		"items": [
+			{
+				"itemType": "regulation",
+				"nameOfAct": "Véhicules accessibles",
+				"creators": [],
+				"code": "RRO",
+				"codeNumber": "1990",
+				"jurisdiction": "ca:on",
+				"language": "fr",
+				"publicLawNumber": "629",
+				"regulationType": "Revised",
+				"url": "https://canlii.ca/t/692t5",
 				"attachments": [],
 				"tags": [],
 				"notes": [],
