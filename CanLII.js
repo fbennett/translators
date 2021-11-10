@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2021-11-03 15:48:36"
+	"lastUpdated": "2021-11-10 14:50:10"
 }
 
 /*
@@ -914,7 +914,7 @@ function statuteReference(doc, url) {
 	var item = new Zotero.Item("statute");
 	item.language = doc.documentElement.lang;
 	var metaInfo = ZU.trimInternal(ZU.xpathText(doc, '//*[@id="documentContainer"]/div[2]/h2'));
-	var statuteRegex = /^([\s\S]+?)\,\s([\w\-]+(?:\s\d+)?)\,?\sc\s([\s\S]+?)?(?:\s\((\d)\w+\s\w+\))?(?:\,\s\w+?\s(\d+))?$/;
+	var statuteRegex = /^([\s\S]+?)\,\s(?:([\w\-]+)\s?(\d+)?)\,?\sc\s([\s\S]+?)?(?:\s\((\d)\w+\s\w+\))?(?:\,\s\w+?\s(\d+))?$/;
 	// 1 : nameOfAct
 	// 2 : code
 	// 3 : codeNumber (chapter)
@@ -924,15 +924,17 @@ function statuteReference(doc, url) {
 	var infoParts = metaInfo.match(statuteRegex);
 	ZU.setMultiField(item,"nameOfAct", infoParts[1],item.language,item.language);
 	ZU.setMultiField(item,"code", infoParts[2],item.language,item.language);
-	item.codeNumber = infoParts[3];
-	if (infoParts[4]) item.publicLawNumber = infoParts[4];
-	if (infoParts[5]) item.section = infoParts[5];
+	if (infoParts[3]) item.dateEnacted = infoParts[3]
+	item.codeNumber = infoParts[4];
+	if (infoParts[5]) item.publicLawNumber = infoParts[5];
+	if (infoParts[6]) item.section = infoParts[6];
 	item.url = ZU.xpathText(doc, "(//span[@class='documentStaticUrl'])[2]");
 	var versionString = ZU.xpathText(doc, '//h3[contains(text(), "Current version:") or contains(text(), "Version courante")]');
 	var versionRegex = /([û\w\d]+\s[û\w\d]+[\,\.]?\s\d+)$/
 	item.dateAmended = versionString.match(versionRegex)[1];
 	item.jurisdiction = findJurisdiction(url);
 	var bilingual = doc.getElementById('languageSwitch');
+	statuteAttachements(doc,url,item);
 	if (bilingual) {		
 		statuteBilingual(item,bilingual);
 	}
@@ -945,7 +947,7 @@ function statuteBilingual(item,bilingual) {
 	var altLang = caseAltLang(item);
 	var altLangUrl = 'https://www.canlii.org/'+attr(bilingual, '.canlii', 'href', 0);
 	Zotero.Utilities.processDocuments(altLangUrl, function(altDoc) {
-		var statuteRegex = /^([\s\S]+?)\,\s([\w\-]+(?:\s\d+)?)\,?\sc\s([\s\S]+?)?(?:\s\((\d)\w+\s\w+\))?(?:\,\s\w+?\s(\d+))?$/
+		var statuteRegex = /^([\s\S]+?)\,\s(?:([\w\-]+)\s?(\d+)?)\,?\sc\s([\s\S]+?)?(?:\s\((\d)\w+\s\w+\))?(?:\,\s\w+?\s(\d+))?$/
 		// 1 : nameOfAct
 		// 2 : code
 		// 3 : codeNumber (chapter)
@@ -957,6 +959,20 @@ function statuteBilingual(item,bilingual) {
 		ZU.setMultiField(item,"nameOfAct", altInfoParts[1],altLang,item.language);
 		ZU.setMultiField(item,"code", altInfoParts[2],altLang,item.language);
 		item.complete();
+	});
+}
+
+function statuteAttachements(doc,url,item) {
+	// attach link to pdf version
+	var pdfurl = url.replace(/\.html(?:[?#].*)?/, ".pdf");
+	item.attachments.push({
+		url: pdfurl,
+		title: "CanLII Full Text PDF",
+		mimeType: "application/pdf"
+	});
+	item.attachments.push({
+		document: doc,
+		title: "CanLII Snapshot"
 	});
 }
 
@@ -1028,6 +1044,7 @@ function regulationBilingual(item,bilingual) {
 		item.complete();
 	});
 }
+
 
 
 
