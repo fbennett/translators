@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2021-11-10 14:50:10"
+	"lastUpdated": "2021-11-12 15:28:13"
 }
 
 /*
@@ -658,7 +658,7 @@ function buildReferenceArray(string,array){
 }
 
 function caseCourt(item) {
-	court_description = text('#breadcrumbs span', 2);
+	court_description = Zotero.Utilities.trimInternal(text('#breadcrumbs span', 2));
 	if (courtsDict[item.jurisdiction].language[item.language].court[court_description].LRRName) {
 		return courtsDict[item.jurisdiction].language[item.language].court[court_description].LRRName;
 	} else {
@@ -762,7 +762,7 @@ function caseBilingual(item,bilingual) {
 			var altReference = referenceObject[item.itemID];
 			var referenceRegex =  /^(?:\[(\d{4})\]|(\d{4}))?\s?(?:(\d+)\s)?([\D]+?)(?:(?:(?:\s\(|\s(?:no\s))(\d+)(?:\w+\)\s|$|\s))|\s)(\d+)?(?:\(\w+\))?$/i;
 			altReporter = altReference.match(referenceRegex)[4];
-			ZU.setMultiField(item,"reporter", altReporter,altLang,item.language)
+			ZU.setMultiField(item,"reporter", altReporter,altLang,item.language);
 		}
 		item.language = "";
 		item.complete();
@@ -931,7 +931,7 @@ function statuteReference(doc, url) {
 	item.url = ZU.xpathText(doc, "(//span[@class='documentStaticUrl'])[2]");
 	var versionString = ZU.xpathText(doc, '//h3[contains(text(), "Current version:") or contains(text(), "Version courante")]');
 	var versionRegex = /([û\w\d]+\s[û\w\d]+[\,\.]?\s\d+)$/
-	item.dateAmended = versionString.match(versionRegex)[1];
+	if (versionString) item.dateAmended = versionString.match(versionRegex)[versionRegex.length -1];
 	item.jurisdiction = findJurisdiction(url);
 	var bilingual = doc.getElementById('languageSwitch');
 	statuteAttachements(doc,url,item);
@@ -1068,6 +1068,7 @@ function regulationBilingual(item,bilingual) {
 
 
 
+
 /** BEGIN TEST CASES **/
 var testCases = [
 	{
@@ -1110,13 +1111,22 @@ var testCases = [
 				"itemType": "statute",
 				"nameOfAct": "Code criminel",
 				"creators": [],
-				"code": "LRC 1985",
+				"dateEnacted": "1985",
+				"code": "LRC",
 				"codeNumber": "C-46",
-				"dateAmended": "27 août 2021",
 				"jurisdiction": "ca",
 				"language": "fr",
 				"url": "https://canlii.ca/t/6d6rm",
-				"attachments": [],
+				"attachments": [
+					{
+						"title": "CanLII Full Text PDF",
+						"mimeType": "application/pdf"
+					},
+					{
+						"title": "CanLII Snapshot",
+						"mimeType": "text/html"
+					}
+				],
 				"tags": [],
 				"notes": [],
 				"seeAlso": []
@@ -1131,13 +1141,22 @@ var testCases = [
 				"itemType": "statute",
 				"nameOfAct": "Loi canadienne sur l'Accessibilité",
 				"creators": [],
-				"code": "LC 2019",
+				"dateEnacted": "2019",
+				"code": "LC",
 				"codeNumber": "10",
-				"dateAmended": "11 juil. 2019",
 				"jurisdiction": "ca",
 				"language": "fr",
 				"url": "https://canlii.ca/t/6c45w",
-				"attachments": [],
+				"attachments": [
+					{
+						"title": "CanLII Full Text PDF",
+						"mimeType": "application/pdf"
+					},
+					{
+						"title": "CanLII Snapshot",
+						"mimeType": "text/html"
+					}
+				],
 				"tags": [],
 				"notes": [],
 				"seeAlso": []
@@ -1152,14 +1171,23 @@ var testCases = [
 				"itemType": "statute",
 				"nameOfAct": "Official Languages Act",
 				"creators": [],
-				"code": "RSC 1985",
+				"dateEnacted": "1985",
+				"code": "RSC",
 				"codeNumber": "31",
-				"dateAmended": "Sep 21, 2017",
 				"jurisdiction": "ca",
 				"language": "en",
 				"publicLawNumber": "4",
 				"url": "https://canlii.ca/t/530sl",
-				"attachments": [],
+				"attachments": [
+					{
+						"title": "CanLII Full Text PDF",
+						"mimeType": "application/pdf"
+					},
+					{
+						"title": "CanLII Snapshot",
+						"mimeType": "text/html"
+					}
+				],
 				"tags": [],
 				"notes": [],
 				"seeAlso": []
@@ -1886,6 +1914,36 @@ var testCases = [
 				"regulationType": "Revised",
 				"url": "https://canlii.ca/t/692t5",
 				"attachments": [],
+				"tags": [],
+				"notes": [],
+				"seeAlso": []
+			}
+		]
+	},
+	{
+		"type": "web",
+		"url": "https://www.canlii.org/en/pe/laws/stat/rspei-1988-c-f-15.1/latest/rspei-1988-c-f-15.1.html?autocompleteStr=RSPEI%20F-15.1&autocompletePos=1",
+		"items": [
+			{
+				"itemType": "statute",
+				"nameOfAct": "French Language Services Act",
+				"creators": [],
+				"dateEnacted": "1988",
+				"code": "RSPEI",
+				"codeNumber": "F-15.1",
+				"jurisdiction": "ca:pe",
+				"language": "en",
+				"url": "https://canlii.ca/t/kt4z",
+				"attachments": [
+					{
+						"title": "CanLII Full Text PDF",
+						"mimeType": "application/pdf"
+					},
+					{
+						"title": "CanLII Snapshot",
+						"mimeType": "text/html"
+					}
+				],
 				"tags": [],
 				"notes": [],
 				"seeAlso": []
