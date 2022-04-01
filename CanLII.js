@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2021-11-12 15:28:13"
+	"lastUpdated": "2022-03-30 15:13:49"
 }
 
 /*
@@ -658,7 +658,7 @@ function buildReferenceArray(string,array){
 }
 
 function caseCourt(item) {
-	court_description = Zotero.Utilities.trimInternal(text('#breadcrumbs span', 2));
+	court_description = Zotero.Utilities.trimInternal(text('#breadcrumbs span', 5));
 	if (courtsDict[item.jurisdiction].language[item.language].court[court_description].LRRName) {
 		return courtsDict[item.jurisdiction].language[item.language].court[court_description].LRRName;
 	} else {
@@ -1044,6 +1044,7 @@ function regulationBilingual(item,bilingual) {
 		item.complete();
 	});
 }
+
 
 
 
