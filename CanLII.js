@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-03-30 15:13:49"
+	"lastUpdated": "2022-04-29 16:10:30"
 }
 
 /*
@@ -930,8 +930,9 @@ function statuteReference(doc, url) {
 	if (infoParts[6]) item.section = infoParts[6];
 	item.url = ZU.xpathText(doc, "(//span[@class='documentStaticUrl'])[2]");
 	var versionString = ZU.xpathText(doc, '//h3[contains(text(), "Current version:") or contains(text(), "Version courante")]');
-	var versionRegex = /([û\w\d]+\s[û\w\d]+[\,\.]?\s\d+)$/
-	if (versionString) item.dateAmended = versionString.match(versionRegex)[versionRegex.length -1];
+	var versionRegex = /([ûé\w\d]+\s[ûé\w\d]+[\,\.]?\s\d+)$/
+	if (versionString)
+		if (versionString.match(versionRegex)) item.dateAmended = versionString.match(versionRegex)[versionRegex.length -1];
 	item.jurisdiction = findJurisdiction(url);
 	var bilingual = doc.getElementById('languageSwitch');
 	statuteAttachements(doc,url,item);
