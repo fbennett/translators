@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-04-29 16:10:30"
+	"lastUpdated": "2022-12-05 15:21:01"
 }
 
 /*
@@ -119,9 +119,9 @@ var courtsDict = {
 						LRRName: "court.appeal",
 						start: "1998-01-01"
 					},
-					"Court of Queen's Bench": {
-						LRRName: "court.queens.bench",
-						start: "1998-01-01"
+					"Court of King's Bench of Alberta": {
+						LRRName: "court.kings.bench",
+						start: "2022-09-08"
 					},
 					"Provincial Court": {
 						LRRName: "provincial.court",
@@ -135,9 +135,9 @@ var courtsDict = {
 						LRRName: "court.appeal",
 						start: "1998-01-01"
 					},
-					"Cour du banc de la Reine": {
-						LRRName: "court.queens.bench",
-						start: "1998-01-01"
+					"Cour du banc du Roi de l'Alberta": {
+						LRRName: "court.kings.bench",
+						start: "2022-09-08"
 					},
 					"Cour provinciale": {
 						LRRName: "provincial.court",
@@ -189,9 +189,9 @@ var courtsDict = {
 						LRRName: "court.appeal",
 						start: "2000-03-01"
 					},
-					"Court of Queen's Bench of Manitoba": {
-						LRRName: "court.queens.bench",
-						start: "2000-04-01"
+					"Court of King's Bench of Manitoba": {
+						LRRName: "court.kings.bench",
+						start: "2022-09-08"
 					},
 					"Provincial Court of Manitoba": {
 						LRRName: "provincial.court",
@@ -205,9 +205,9 @@ var courtsDict = {
 						LRRName: "court.appeal",
 						start: "2000-03-01"
 					},
-					"Cour du Banc de la Reine du Manitoba": {
-						LRRName: "court.queens.bench",
-						start: "2000-04-01"
+					"Cour du Banc du Roi du Manitoba": {
+						LRRName: "court.kings.bench",
+						start: "2022-09-08"
 					},
 					"Cour provinciale du Manitoba": {
 						LRRName: "provincial.court",
@@ -225,9 +225,9 @@ var courtsDict = {
 						LRRName: "court.appeal",
 						start: "2001-05-01"
 					},
-					"Court of Queen's Bench of New Brunswick": {
-						LRRName: "court.queens.bench",
-						start: "2002-01-01"
+					"Court of King's Bench of New Brunswick": {
+						LRRName: "court.kings.bench",
+						start: "2022-09-08"
 					},
 					"Provincial Court": {
 						LRRName: "provincial.court",
@@ -241,9 +241,9 @@ var courtsDict = {
 						LRRName: "court.appeal",
 						start: "2001-05-01"
 					},
-					"Cour du Banc de la Reine du Nouveau-Brunswick": {
-						LRRName: "court.queens.bench",
-						start: "2002-01-01"
+					"Cour du Banc du Roi du Nouveau-Brunswick": {
+						LRRName: "court.kings.bench",
+						start: "2022-09-08"
 					},
 					"Cour provinciale": {
 						LRRName: "provincial.court",
@@ -533,20 +533,20 @@ var courtsDict = {
 						LRRName: "court.appeal",
 						start: "2000-01-01"
 					},
-					"Court of Queen's Bench for Saskatchewan": {
-						LRRName: "court.queens.bench",
-						start: "1999-01-01"
+					"Court of King's Bench for Saskatchewan": {
+						LRRName: "court.kings.bench",
+						start: "2022-09-08"
 					},
 					"Provincial Court of Saskatchewan": {
 						LRRName: "provincial.court",
 						start: "2002-01-01"
 					},
 					"Saskatchewan District Court": {
-						LRRName: "court.queens.bench",
+						LRRName: "court.kings.bench",
 						start: ""
 					},
 					"Saskatchewan Unified Family Court": {
-						LRRName: "court.queens.bench",
+						LRRName: "court.kings.bench",
 						start: ""
 					}
 				}
@@ -557,20 +557,20 @@ var courtsDict = {
 						LRRName: "court.appeal",
 						start: "2000-01-01"
 					},
-					"Cour du Banc de la Reine de la Saskatchewan": {
-						LRRName: "court.queens.bench",
-						start: "1999-01-01"
+					"Cour du banc du Roi de la Saskatchewan": {
+						LRRName: "court.kings.bench",
+						start: "2022-09-08"
 					},
 					"Cour provinciale de la Saskatchewan": {
 						LRRName: "provincial.court",
 						start: "2002-01-01"
 					},
 					"Saskatchewan District Court": {
-						LRRName: "court.queens.bench",
+						LRRName: "court.kings.bench",
 						start: ""
 					},
 					"Saskatchewan Unified Family Court": {
-						LRRName: "court.queens.bench",
+						LRRName: "court.kings.bench",
 						start: ""
 					}
 				}
@@ -660,8 +660,19 @@ function buildReferenceArray(string,array){
 function caseCourt(item) {
 	court_description = Zotero.Utilities.trimInternal(text('#breadcrumbs span', 5));
 	if (courtsDict[item.jurisdiction].language[item.language].court[court_description].LRRName) {
-		return courtsDict[item.jurisdiction].language[item.language].court[court_description].LRRName;
-	} else {
+		let courtName = courtsDict[item.jurisdiction].language[item.language].court[court_description].LRRName;
+		let courtStartDate = new Date(courtsDict[item.jurisdiction].language[item.language].court[court_description].start);
+		let decisionDate = new Date(item.dateDecided);
+		Zotero.debug(courtName);
+		Zotero.debug(courtStartDate);
+		Zotero.debug(item.dateDecided);
+		
+		if (courtName=="court.kings.bench" && decisionDate>courtStartDate) {
+			return courtName;
+		}
+		else return "court.queens.bench";
+	}
+	else {
 		return court_description;
 	}
 }
@@ -852,8 +863,8 @@ function othervalues(doc,url,item,mainCitationString) {
 	item.language = doc.documentElement.lang;
 	ZU.setMultiField(item,"caseName",caseTitle(mainCitationString),item.language,item.language);
 	item.jurisdiction = findJurisdiction(url);
-	item.court = caseCourt(item);
 	item.dateDecided = ZU.xpathText(doc, '//div[@id="documentMeta"]//div[contains(text(), "Date")]/following-sibling::div');
+	item.court = caseCourt(item);
 	item.docketNumber = caseDocket(doc);
 	item.url = caseUrl(doc);	
 	caseAttachements(doc,url,item);
@@ -1045,6 +1056,7 @@ function regulationBilingual(item,bilingual) {
 		item.complete();
 	});
 }
+
 
 
 
