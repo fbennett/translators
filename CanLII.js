@@ -663,14 +663,10 @@ function caseCourt(item) {
 		let courtName = courtsDict[item.jurisdiction].language[item.language].court[court_description].LRRName;
 		let courtStartDate = new Date(courtsDict[item.jurisdiction].language[item.language].court[court_description].start);
 		let decisionDate = new Date(item.dateDecided);
-		Zotero.debug(courtName);
-		Zotero.debug(courtStartDate);
-		Zotero.debug(item.dateDecided);
-		
-		if (courtName=="court.kings.bench" && decisionDate>courtStartDate) {
-			return courtName;
+		if (courtName=="court.kings.bench" && decisionDate<courtStartDate) {
+			return "court.queens.bench";
 		}
-		else return "court.queens.bench";
+		else return courtName;
 	}
 	else {
 		return court_description;
