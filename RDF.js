@@ -12,7 +12,7 @@
 	},
 	"inRepository": true,
 	"translatorType": 1,
-	"lastUpdated": "2020-06-26 20:49:31"
+	"lastUpdated": "2022-09-22 02:12:48"
 }
 
 /*
@@ -72,6 +72,8 @@ var n = {
 	og: "http://ogp.me/ns#",				// Used for Facebook's OpenGraph Protocol
 	article: "http://ogp.me/ns/article#",
 	book: "http://ogp.me/ns/book#",
+	music: "http://ogp.me/ns/music#",
+	video: "http://ogp.me/ns/video#",
 	so: "http://schema.org/",
 	codemeta: "https://codemeta.github.io/terms/"
 };
@@ -562,6 +564,13 @@ function detectType(newItem, node, ret) {
 					t.dc = 'bookSection';
 					break;
 
+				// via examples from https://edoc.hu-berlin.de/
+				case 'bachelorthesis':
+				case 'masterthesis':
+				case 'doctoralthesis':
+					t.dc = 'thesis';
+					break;
+				
 				// from http://www.idealliance.org/specifications/prism/specifications/prism-controlled-vocabularies/prism-12-controlled-vocabularies
 				// some are the same as eprints and are handled above
 				case 'electronicbook':
@@ -1214,9 +1223,9 @@ function importItem(newItem, node) {
 	/** CUSTOM ITEM TYPE  -- Currently only Dataset **/
 	if (type && (type.toLowerCase() == "dataset" || type.toLowerCase() == "datacatalog")) {
 		if (newItem.extra) {
-			newItem.extra += "\ntype: dataset";
+			newItem.extra += "\nType: dataset";
 		}
-		else newItem.extra = "type: dataset";
+		else newItem.extra = "Type: dataset";
 	}
 
 

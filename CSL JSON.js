@@ -12,7 +12,7 @@
 	"inRepository": true,
 	"translatorType": 3,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2020-01-31 00:12:00"
+	"lastUpdated": "2022-09-20 13:32:25"
 }
 
 var mimeTypes = {
@@ -36,41 +36,69 @@ function getMimeType(str) {
     return mimeTypes[mimeKey];
 }
 
+/*
+	***** BEGIN LICENSE BLOCK *****
+
+	Copyright © 2022 Simon Kornblith and Sebastian Karcher
+
+	This file is part of Zotero.
+
+	Zotero is free software: you can redistribute it and/or modify
+	it under the terms of the GNU Affero General Public License as published by
+	the Free Software Foundation, either version 3 of the License, or
+	(at your option) any later version.
+
+	Zotero is distributed in the hope that it will be useful,
+	but WITHOUT ANY WARRANTY; without even the implied warranty of
+	MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the
+	GNU Affero General Public License for more details.
+
+	You should have received a copy of the GNU Affero General Public License
+	along with Zotero. If not, see <http://www.gnu.org/licenses/>.
+
+	***** END LICENSE BLOCK *****
+*/
+
 function parseInput() {
 	var str, json = "";
 	
-	// Read in the whole file at once, since we can't easily parse a JSON stream. The 
+	// Read in the whole file at once, since we can't easily parse a JSON stream. The
 	// chunk size here is pretty arbitrary, although larger chunk sizes may be marginally
 	// faster. We set it to 1MB.
 	while ((str = Z.read(1048576)) !== false) json += str;
 	
 	try {
 		return JSON.parse(json);
-	} catch(e) {
+	}
+	catch (e) {
 		Zotero.debug(e);
 	}
+	return false;
 }
 
 function detectImport() {
+	/* eslint-disable camelcase */
+	const CSL_TYPES = { article: true, "article-journal": true, "article-magazine": true,
+		"article-newspaper": true, bill: true, book: true, broadcast: true,
+		chapter: true, classic: true, collection: true, dataset: true, document: true,
+		entry: true, "entry-dictionary": true, "entry-encyclopedia": true, event: true,
+		figure: true, graphic: true, hearing: true, interview: true, legal_case: true,
+		legislation: true, manuscript: true, map: true, motion_picture: true,
+		musical_score: true, pamphlet: true, "paper-conference": true, patent: true,
+		performance: true, personal_communication: true, periodical: true, post: true,
+		"post-weblog": true, regulation: true, report: true, review: true, "review-book": true,
+		song: true, speech: true, standard: true, thesis: true, treaty: true, webpage: true,
+		"legal_commentary": true, "gazette": true, "video": true				
+	};
+	/* eslint-enable camelcase*/
 
-	const CSL_TYPES = {"article":true, "article-journal":true, "article-magazine":true,
-		"article-newspaper":true, "bill":true, "book":true, "broadcast":true,
-		"chapter":true, "dataset":true, "entry":true, "entry-dictionary":true,
-		"entry-encyclopedia":true, "figure":true, "graphic":true, "interview":true,
-		"legal_case":true, "legal_commentary": true, "legislation":true, "manuscript":true, "map":true,
-		"motion_picture":true, "musical_score":true, "pamphlet":true,
-		"paper-conference":true, "patent":true, "personal_communication":true,
-		"post":true, "post-weblog":true, "report":true, "review":true, "review-book":true,
-		"song":true, "speech":true, "thesis":true, "treaty":true, "webpage":true,
-		"gazette":true, "regulation":true, "classic":true, "standard":true, "hearing":true, "video":true};
-		
 	var parsedData = parseInput();
 	if (!parsedData) return false;
 	
 	if (typeof parsedData !== "object") return false;
 	if (!(parsedData instanceof Array)) parsedData = [parsedData];
 	
-	for (var i=0; i<parsedData.length; i++) {
+	for (var i = 0; i < parsedData.length; i++) {
 		var item = parsedData[i];
 		// second argument is for "strict"
 		if (typeof item !== "object" || !item.type || !CSL_TYPES[item.type]) {
@@ -94,6 +122,7 @@ function doImport() {
 			startImport(resolve, reject);
 		});
 	}
+	return false;
 }
 
 function startImport(resolve, reject) {
@@ -104,7 +133,7 @@ function startImport(resolve, reject) {
 		importNext(parsedData, resolve, reject);
 	}
 	catch (e) {
-		reject (e);
+		reject(e);
 	}
 }
 
@@ -194,9 +223,9 @@ function importNext(data, resolve, reject) {
 
 function doExport() {
 	var item, data = [];
-	while (item = Z.nextItem()) {
+	while (item = Z.nextItem()) { // eslint-disable-line no-cond-assign
 		if (item.extra) {
-			item.extra = item.extra.replace(/(?:^|\n)citation key\s*:\s*([^\s]+)(?:\n|$)/i, (m, citationKey) => {
+			item.extra = item.extra.replace(/(?:^|\n)citation key\s*:\s*([^\s]+)(?:\n|$)/i, (m, citationKey) => { // eslint-disable-line no-loop-func
 				item.citationKey = citationKey;
 				return '\n';
 			}).trim();
@@ -207,6 +236,7 @@ function doExport() {
 	}
 	Z.write(JSON.stringify(data, null, "\t"));
 }
+
 /** BEGIN TEST CASES **/
 var testCases = [
 	{

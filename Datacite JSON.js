@@ -8,7 +8,7 @@
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 1,
-	"lastUpdated": "2020-04-20 20:15:16"
+	"lastUpdated": "2022-08-25 10:25:41"
 }
 
 /*
@@ -105,7 +105,7 @@ function doImport() {
 
 	var item = new Zotero.Item(type);
 	if (data.types.citeproc == "dataset") {
-		item.extra = "type: dataset";
+		item.extra = "Type: dataset";
 	}
 	var title = "";
 	for (let titleElement of data.titles) {
@@ -131,7 +131,7 @@ function doImport() {
 						"creatorType": "author"
 					});
 				} else {
-					item.creators.push(ZU.cleanAuthor(creator.name, "author"));
+					item.creators.push(ZU.cleanAuthor(creator.name, "author", true));
 				}
 			} else {
 				item.creators.push({"lastName": creator.name, "creatorType": "author", "fieldMode": true});
@@ -433,7 +433,7 @@ var testCases = [
 					}
 				],
 				"date": "2016",
-				"extra": "type: dataset\nDOI: 10.17171/2-3-12-1",
+				"extra": "Type: dataset\nDOI: 10.17171/2-3-12-1",
 				"publisher": "Edition Topoi",
 				"url": "http://repository.edition-topoi.org/collection/MAGN/single/0012/0",
 				"attachments": [],

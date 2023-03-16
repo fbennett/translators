@@ -2,14 +2,14 @@
 	"translatorID": "3dcbb947-f7e3-4bbd-a4e5-717f3701d624",
 	"label": "HeinOnline",
 	"creator": "Frank Bennett",
-	"target": "^https?://(www\\.)?heinonline\\.org/HOL/(LuceneSearch|Page|IFLPMetaData)\\?",
+	"target": "^https?://(www\\.)?heinonline\\.org/HOL/(LuceneSearch|Page|IFLPMetaData|AuthorProfile)\\?",
 	"minVersion": "3.0",
 	"maxVersion": "",
 	"priority": 100,
 	"inRepository": true,
 	"translatorType": 4,
-	"browserSupport": "gcsbv",
-	"lastUpdated": "2019-10-26 13:45:08"
+	"browserSupport": "gcsibv",
+	"lastUpdated": "2022-08-23 02:00:49"
 }
 
 /*
@@ -35,10 +35,6 @@
 	** Utilities **
 	***************
 */
-
-// attr()/text() v2
-// eslint-disable-next-line
-function attr(docOrElem,selector,attr,index){var elem=index?docOrElem.querySelectorAll(selector).item(index):docOrElem.querySelector(selector);return elem?elem.getAttribute(attr):null}function text(docOrElem,selector,index){var elem=index?docOrElem.querySelectorAll(selector).item(index):docOrElem.querySelector(selector);return elem?elem.textContent:null}
 
 // Get any search results from current page
 // Used in detectWeb() and doWeb()
@@ -142,17 +138,25 @@ function scrapePage(doc, url) {
 			if (pdfPageURL) {
 				pdfPageURL = docParams.base + pdfPageURL;
 				// Z.debug(pdfPageURL)
-				ZU.doGet(pdfPageURL, function (pdfPage) {
+				ZU.processDocuments(pdfPageURL, function (pdfDoc) {
 					// Call to pdfPageURL prepares PDF for download via META refresh URL
 					var pdfURL = null;
-					var m = pdfPage.match(/<META.*URL="([^"]+)/);
+					var m = pdfDoc.querySelector('meta[http-equiv="Refresh"]');
 					// Z.debug(pdfPage)
 					// Z.debug(m)
 					if (m) {
-						pdfURL = docParams.base + m[1];
+						var refreshURL;
+						var parts = m.getAttribute('content').split(/;\s*url=/);
+						if (parts.length === 2) {
+							refreshURL = parts[1].trim().replace(/^'(.+)'/, '$1');
+						}
+						else {
+							refreshURL = m.getAttribute('url');
+						}
+						pdfURL = docParams.base + refreshURL;
 					}
 					translateRIS(ris, pdfURL);
-				}, null);
+				});
 			}
 			else {
 				translateRIS(ris);
@@ -177,7 +181,7 @@ function scrapePage(doc, url) {
 function detectWeb(doc, url) {
 	var COinS = getXPathStr("title", doc, '//span[contains(@class, "Z3988")]');
 	var RIS = getXPathStr("href", doc, '//form[@id="pagepicker"]//a[contains(@href, "PrintRequest")][1]');
-	if (url.includes("/LuceneSearch?")) {
+	if (url.includes("/LuceneSearch?") || url.includes("/AuthorProfile?")) {
 		if (getSearchResults(doc)) {
 			return "multiple";
 		}
@@ -274,6 +278,11 @@ var testCases = [
 				"seeAlso": []
 			}
 		]
+	},
+	{
+		"type": "web",
+		"url": "https://heinonline.org/HOL/AuthorProfile?action=edit&search_name=de%20Silva%20de%20Alwis%2C%20Rangita&collection=journals",
+		"items": "multiple"
 	}
 ]
 /** END TEST CASES **/
