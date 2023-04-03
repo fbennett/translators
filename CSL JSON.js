@@ -230,7 +230,8 @@ function doExport() {
 				return '\n';
 			}).trim();
 		}
-		var cslItem = ZU.itemToCSLJSON(item);
+		// set includeRelations
+		var cslItem = ZU.itemToCSLJSON(item, null, true);
 		if (item.citationKey) cslItem.id = item.citationKey;
 		data.push(cslItem);
 	}
