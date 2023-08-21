@@ -9,31 +9,13 @@
 	"configOptions": {
 		"async": true
 	},
+	"displayOptions": {
+		"formattedValues": false
+	},
 	"inRepository": true,
 	"translatorType": 3,
 	"browserSupport": "gcsibv",
 	"lastUpdated": "2022-09-20 13:32:25"
-}
-
-var mimeTypes = {
-    "PDF": "application/pdf",
-    "DOC": "application/msword",
-    "DOCX": "application/msword",
-    "HTML": "text/html",
-    "HTM": "text/html",
-    "TXT": "text/plain",
-    "DEFAULT": "application/octet-stream"
-};
-
-var mimeRex = new RegExp("(" + Object.keys(mimeTypes).join("|") + ")$", "i");
-
-function getMimeType(str) {
-    var mimeKey = "DEFAULT";
-    var m = mimeRex.exec(str);
-    if (m) {
-        mimeKey = m[1].toUpperCase();
-    }
-    return mimeTypes[mimeKey];
 }
 
 /*
@@ -58,6 +40,27 @@ function getMimeType(str) {
 
 	***** END LICENSE BLOCK *****
 */
+
+var mimeTypes = {
+    "PDF": "application/pdf",
+    "DOC": "application/msword",
+    "DOCX": "application/msword",
+    "HTML": "text/html",
+    "HTM": "text/html",
+    "TXT": "text/plain",
+    "DEFAULT": "application/octet-stream"
+};
+
+var mimeRex = new RegExp("(" + Object.keys(mimeTypes).join("|") + ")$", "i");
+
+function getMimeType(str) {
+    var mimeKey = "DEFAULT";
+    var m = mimeRex.exec(str);
+    if (m) {
+        mimeKey = m[1].toUpperCase();
+    }
+    return mimeTypes[mimeKey];
+}
 
 function parseInput() {
 	var str, json = "";
@@ -230,7 +233,9 @@ function doExport() {
 				return '\n';
 			}).trim();
 		}
-		var cslItem = ZU.itemToCSLJSON(item);
+		// set includeRelations
+		var formattedValues = Zotero.getOption('formattedValues');
+		var cslItem = ZU.itemToCSLJSON(item, null, true, formattedValues);
 		if (item.citationKey) cslItem.id = item.citationKey;
 		data.push(cslItem);
 	}
