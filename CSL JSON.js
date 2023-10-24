@@ -166,7 +166,8 @@ function importNext(data, resolve, reject) {
 				d.type = 'article';
 			}
 			
-			ZU.itemFromCSLJSON(item, d);
+			// fourth argument turns on portable JSON conversion.
+			ZU.itemFromCSLJSON(item, d, null, true);
 			item.attachments = [];
             item.tags = [];
 			if (d.attachments && d.attachments.length) {
