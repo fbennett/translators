@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2023-03-27 15:42:13"
+	"lastUpdated": "2024-01-31 18:56:27"
 }
 
 /*
@@ -999,6 +999,7 @@ function regulationReference(doc, url) {
 
 	var infoParts = metaInfo.match(regulationRegex);
 	ZU.setMultiField(item,"nameOfAct", infoParts[1],item.language,item.language);
+	ZU.setMultiField(item,"title", infoParts[1],item.language,item.language);
 	ZU.setMultiField(item,"code", infoParts[2],item.language,item.language);
 
 
@@ -1048,10 +1049,12 @@ function regulationBilingual(item,bilingual) {
 		var altMetaInfo = ZU.trimInternal(ZU.xpathText(altDoc, '//*[@id="documentContainer"]/div[2]/h2'))
 		var altInfoParts = altMetaInfo.match(regulationRegex);
 		ZU.setMultiField(item,"nameOfAct", altInfoParts[1],altLang,item.language);
+		ZU.setMultiField(item,"title", altInfoParts[1],altLang,item.language);
 		ZU.setMultiField(item,"code", altInfoParts[2],altLang,item.language);
 		item.complete();
 	});
 }
+
 
 
 
