@@ -9,7 +9,7 @@
 	"inRepository": true,
 	"translatorType": 4,
 	"browserSupport": "gcsibv",
-	"lastUpdated": "2022-12-05 15:21:01"
+	"lastUpdated": "2024-01-31 18:56:27"
 }
 
 /*
@@ -999,6 +999,7 @@ function regulationReference(doc, url) {
 
 	var infoParts = metaInfo.match(regulationRegex);
 	ZU.setMultiField(item,"nameOfAct", infoParts[1],item.language,item.language);
+	ZU.setMultiField(item,"title", infoParts[1],item.language,item.language);
 	ZU.setMultiField(item,"code", infoParts[2],item.language,item.language);
 
 
@@ -1048,10 +1049,13 @@ function regulationBilingual(item,bilingual) {
 		var altMetaInfo = ZU.trimInternal(ZU.xpathText(altDoc, '//*[@id="documentContainer"]/div[2]/h2'))
 		var altInfoParts = altMetaInfo.match(regulationRegex);
 		ZU.setMultiField(item,"nameOfAct", altInfoParts[1],altLang,item.language);
+		ZU.setMultiField(item,"title", altInfoParts[1],altLang,item.language);
 		ZU.setMultiField(item,"code", altInfoParts[2],altLang,item.language);
 		item.complete();
 	});
 }
+
+
 
 
 
@@ -1095,6 +1099,10 @@ var testCases = [
 				"firstPage": "11",
 				"jurisdiction": "ca:on",
 				"language": "en",
+				"multi": {
+					"main": {},
+					"_keys": {}
+				},
 				"url": "https://canlii.ca/t/1vd4b",
 				"yearAsVolume": "2008",
 				"attachments": [
@@ -1126,7 +1134,18 @@ var testCases = [
 				"codeNumber": "C-46",
 				"jurisdiction": "ca",
 				"language": "fr",
-				"url": "https://canlii.ca/t/6d6rm",
+				"multi": {
+					"main": {},
+					"_keys": {
+						"nameOfAct": {
+							"en": "Criminal Code"
+						},
+						"code": {
+							"en": "RSC"
+						}
+					}
+				},
+				"url": "https://canlii.ca/t/6dzjf",
 				"attachments": [
 					{
 						"title": "CanLII Full Text PDF",
@@ -1156,6 +1175,17 @@ var testCases = [
 				"codeNumber": "10",
 				"jurisdiction": "ca",
 				"language": "fr",
+				"multi": {
+					"main": {},
+					"_keys": {
+						"nameOfAct": {
+							"en": "Accessible Canada Act"
+						},
+						"code": {
+							"en": "SC"
+						}
+					}
+				},
 				"url": "https://canlii.ca/t/6c45w",
 				"attachments": [
 					{
@@ -1186,8 +1216,19 @@ var testCases = [
 				"codeNumber": "31",
 				"jurisdiction": "ca",
 				"language": "en",
+				"multi": {
+					"main": {},
+					"_keys": {
+						"nameOfAct": {
+							"fr": "Loi sur les langues officielles"
+						},
+						"code": {
+							"fr": "LRC"
+						}
+					}
+				},
 				"publicLawNumber": "4",
-				"url": "https://canlii.ca/t/530sl",
+				"url": "https://canlii.ca/t/55hdt",
 				"attachments": [
 					{
 						"title": "CanLII Full Text PDF",
@@ -1216,6 +1257,17 @@ var testCases = [
 				"codeNumber": "2019",
 				"jurisdiction": "ca:nt",
 				"language": "en",
+				"multi": {
+					"main": {},
+					"_keys": {
+						"nameOfAct": {
+							"fr": "Règlement sur le service d'urgence 911"
+						},
+						"code": {
+							"fr": "Règl des TN-O"
+						}
+					}
+				},
 				"publicLawNumber": "089",
 				"url": "https://canlii.ca/t/5435x",
 				"attachments": [],
@@ -1237,6 +1289,17 @@ var testCases = [
 				"codeNumber": "1990",
 				"jurisdiction": "ca:on",
 				"language": "en",
+				"multi": {
+					"main": {},
+					"_keys": {
+						"nameOfAct": {
+							"fr": "Véhicules accessibles"
+						},
+						"code": {
+							"fr": "RRO"
+						}
+					}
+				},
 				"publicLawNumber": "629",
 				"regulationType": "Revised",
 				"url": "https://canlii.ca/t/521pt",
@@ -1259,6 +1322,17 @@ var testCases = [
 				"codeNumber": "2000",
 				"jurisdiction": "ca",
 				"language": "en",
+				"multi": {
+					"main": {},
+					"_keys": {
+						"nameOfAct": {
+							"fr": "Règlement canadien sur la sûreté aérienne"
+						},
+						"code": {
+							"fr": "DORS"
+						}
+					}
+				},
 				"publicLawNumber": "111",
 				"url": "https://canlii.ca/t/l66s",
 				"attachments": [],
@@ -1280,6 +1354,17 @@ var testCases = [
 				"codeNumber": "06",
 				"jurisdiction": "ca:on",
 				"language": "fr",
+				"multi": {
+					"main": {},
+					"_keys": {
+						"nameOfAct": {
+							"en": "Smart Meters: Cost Recovery"
+						},
+						"code": {
+							"en": "O Reg"
+						}
+					}
+				},
 				"publicLawNumber": "426",
 				"shortTitle": "Compteurs intelligents",
 				"url": "https://canlii.ca/t/69xd7",
@@ -1302,6 +1387,17 @@ var testCases = [
 				"codeNumber": "88",
 				"jurisdiction": "ca:mb",
 				"language": "en",
+				"multi": {
+					"main": {},
+					"_keys": {
+						"nameOfAct": {
+							"fr": "Règlement sur l'administration scolaire et les écoles publiques"
+						},
+						"code": {
+							"fr": "Règl du Man"
+						}
+					}
+				},
 				"publicLawNumber": "468",
 				"regulationType": "Revised",
 				"url": "https://canlii.ca/t/55293",
@@ -1324,6 +1420,17 @@ var testCases = [
 				"codeNumber": "1990",
 				"jurisdiction": "ca:nt",
 				"language": "en",
+				"multi": {
+					"main": {},
+					"_keys": {
+						"nameOfAct": {
+							"fr": "Règlement sur les explosifs"
+						},
+						"code": {
+							"fr": "RRTN-O"
+						}
+					}
+				},
 				"publicLawNumber": "E-27",
 				"regulationType": "Revised",
 				"url": "https://canlii.ca/t/kd6x",
@@ -1346,6 +1453,10 @@ var testCases = [
 				"codeNumber": "02",
 				"jurisdiction": "ca:pe",
 				"language": "en",
+				"multi": {
+					"main": {},
+					"_keys": {}
+				},
 				"publicLawNumber": "EC564",
 				"url": "https://canlii.ca/t/54qr5",
 				"attachments": [],
@@ -1367,6 +1478,17 @@ var testCases = [
 				"codeNumber": "2000",
 				"jurisdiction": "ca:nb",
 				"language": "en",
+				"multi": {
+					"main": {},
+					"_keys": {
+						"nameOfAct": {
+							"fr": "Règlement général"
+						},
+						"code": {
+							"fr": "Règl du N-B"
+						}
+					}
+				},
 				"publicLawNumber": "8",
 				"url": "https://canlii.ca/t/5379c",
 				"attachments": [],
@@ -1388,6 +1510,10 @@ var testCases = [
 				"codeNumber": "2016",
 				"jurisdiction": "ca:bc",
 				"language": "en",
+				"multi": {
+					"main": {},
+					"_keys": {}
+				},
 				"publicLawNumber": "241",
 				"url": "https://canlii.ca/t/5557k",
 				"attachments": [],
@@ -1409,6 +1535,17 @@ var testCases = [
 				"codeNumber": "2003",
 				"jurisdiction": "ca:mb",
 				"language": "en",
+				"multi": {
+					"main": {},
+					"_keys": {
+						"nameOfAct": {
+							"fr": "Règlement sur la liste des médicaments interchangeables pour le Manitoba"
+						},
+						"code": {
+							"fr": "Règl du Man"
+						}
+					}
+				},
 				"publicLawNumber": "155",
 				"url": "https://canlii.ca/t/k85q",
 				"attachments": [],
@@ -1430,6 +1567,17 @@ var testCases = [
 				"codeNumber": "1035",
 				"jurisdiction": "ca",
 				"language": "en",
+				"multi": {
+					"main": {},
+					"_keys": {
+						"nameOfAct": {
+							"fr": "Règlement sur les oiseaux migrateurs"
+						},
+						"code": {
+							"fr": "CRC"
+						}
+					}
+				},
 				"regulationType": "Revised",
 				"url": "https://canlii.ca/t/54cch",
 				"attachments": [],
@@ -1451,6 +1599,10 @@ var testCases = [
 				"codeNumber": "C-50.2",
 				"jurisdiction": "ca:sk",
 				"language": "en",
+				"multi": {
+					"main": {},
+					"_keys": {}
+				},
 				"publicLawNumber": "21",
 				"regulationType": "Revised",
 				"url": "https://canlii.ca/t/h5jq",
@@ -1473,6 +1625,10 @@ var testCases = [
 				"codeNumber": "24",
 				"jurisdiction": "ca:ns",
 				"language": "en",
+				"multi": {
+					"main": {},
+					"_keys": {}
+				},
 				"publicLawNumber": "2000",
 				"url": "https://canlii.ca/t/52fr4",
 				"attachments": [],
@@ -1494,6 +1650,10 @@ var testCases = [
 				"codeNumber": "2001",
 				"jurisdiction": "ca:ab",
 				"language": "en",
+				"multi": {
+					"main": {},
+					"_keys": {}
+				},
 				"publicLawNumber": "184",
 				"url": "https://canlii.ca/t/54bvw",
 				"attachments": [],
@@ -1515,6 +1675,10 @@ var testCases = [
 				"codeNumber": "78",
 				"jurisdiction": "ca:nl",
 				"language": "en",
+				"multi": {
+					"main": {},
+					"_keys": {}
+				},
 				"publicLawNumber": "99",
 				"url": "https://canlii.ca/t/5550d",
 				"attachments": [],
@@ -1536,6 +1700,17 @@ var testCases = [
 				"codeNumber": "2000",
 				"jurisdiction": "ca",
 				"language": "fr",
+				"multi": {
+					"main": {},
+					"_keys": {
+						"nameOfAct": {
+							"en": "Canadian Aviation Security Regulations"
+						},
+						"code": {
+							"en": "SOR"
+						}
+					}
+				},
 				"publicLawNumber": "111",
 				"url": "https://canlii.ca/t/pwb4",
 				"attachments": [],
@@ -1557,6 +1732,17 @@ var testCases = [
 				"codeNumber": "2000",
 				"jurisdiction": "ca:nb",
 				"language": "fr",
+				"multi": {
+					"main": {},
+					"_keys": {
+						"nameOfAct": {
+							"en": "General Regulation"
+						},
+						"code": {
+							"en": "NB Reg"
+						}
+					}
+				},
 				"publicLawNumber": "8",
 				"url": "https://canlii.ca/t/6b8dp",
 				"attachments": [],
@@ -1578,6 +1764,17 @@ var testCases = [
 				"codeNumber": "88",
 				"jurisdiction": "ca:mb",
 				"language": "fr",
+				"multi": {
+					"main": {},
+					"_keys": {
+						"nameOfAct": {
+							"en": "Education Administration Miscellaneous Provisions Regulation"
+						},
+						"code": {
+							"en": "Man Reg"
+						}
+					}
+				},
 				"publicLawNumber": "468",
 				"regulationType": "Revised",
 				"url": "https://canlii.ca/t/6d3df",
@@ -1600,6 +1797,17 @@ var testCases = [
 				"codeNumber": "1999",
 				"jurisdiction": "ca:nu",
 				"language": "fr",
+				"multi": {
+					"main": {},
+					"_keys": {
+						"nameOfAct": {
+							"en": "Time Zone and Daylight Saving Time Regulations"
+						},
+						"code": {
+							"en": "Nu Reg"
+						}
+					}
+				},
 				"publicLawNumber": "045",
 				"url": "https://canlii.ca/t/p6b2",
 				"attachments": [],
@@ -1621,6 +1829,17 @@ var testCases = [
 				"codeNumber": "C-11",
 				"jurisdiction": "ca:qc",
 				"language": "fr",
+				"multi": {
+					"main": {},
+					"_keys": {
+						"nameOfAct": {
+							"en": "Regulation respecting the language of commerce and business"
+						},
+						"code": {
+							"en": "CQLR"
+						}
+					}
+				},
 				"publicLawNumber": "9",
 				"regulationType": "Revised",
 				"url": "https://canlii.ca/t/69wr4",
@@ -1643,6 +1862,17 @@ var testCases = [
 				"codeNumber": "2003",
 				"jurisdiction": "ca:mb",
 				"language": "fr",
+				"multi": {
+					"main": {},
+					"_keys": {
+						"nameOfAct": {
+							"en": "Manitoba Drug Interchangeability Formulary Regulation"
+						},
+						"code": {
+							"en": "Man Reg"
+						}
+					}
+				},
 				"publicLawNumber": "155",
 				"url": "https://canlii.ca/t/nz92",
 				"attachments": [],
@@ -1664,6 +1894,17 @@ var testCases = [
 				"codeNumber": "82",
 				"jurisdiction": "ca:qc",
 				"language": "fr",
+				"multi": {
+					"main": {},
+					"_keys": {
+						"nameOfAct": {
+							"en": "Regulation respecting advertising of the Ordre des dentistes du Québec"
+						},
+						"code": {
+							"en": "OC"
+						}
+					}
+				},
 				"publicLawNumber": "784",
 				"url": "https://canlii.ca/t/mfj0",
 				"attachments": [],
@@ -1685,6 +1926,17 @@ var testCases = [
 				"codeNumber": "2019",
 				"jurisdiction": "ca:nt",
 				"language": "fr",
+				"multi": {
+					"main": {},
+					"_keys": {
+						"nameOfAct": {
+							"en": "9-1-1 Regulations"
+						},
+						"code": {
+							"en": "NWT Reg"
+						}
+					}
+				},
 				"publicLawNumber": "089",
 				"url": "https://canlii.ca/t/6c498",
 				"attachments": [],
@@ -1706,6 +1958,17 @@ var testCases = [
 				"codeNumber": "1990",
 				"jurisdiction": "ca:nt",
 				"language": "fr",
+				"multi": {
+					"main": {},
+					"_keys": {
+						"nameOfAct": {
+							"en": "Explosives Regulations"
+						},
+						"code": {
+							"en": "RRNWT"
+						}
+					}
+				},
 				"publicLawNumber": "E-27",
 				"regulationType": "Revised",
 				"url": "https://canlii.ca/t/p3b8",
@@ -1728,6 +1991,17 @@ var testCases = [
 				"codeNumber": "1035",
 				"jurisdiction": "ca",
 				"language": "fr",
+				"multi": {
+					"main": {},
+					"_keys": {
+						"nameOfAct": {
+							"en": "Migratory Birds Regulations"
+						},
+						"code": {
+							"en": "CRC"
+						}
+					}
+				},
 				"regulationType": "Revised",
 				"url": "https://canlii.ca/t/6cdgt",
 				"attachments": [],
@@ -1749,6 +2023,17 @@ var testCases = [
 				"codeNumber": "82",
 				"jurisdiction": "ca:qc",
 				"language": "en",
+				"multi": {
+					"main": {},
+					"_keys": {
+						"nameOfAct": {
+							"fr": "Règlement sur la publicité de l'Ordre des dentistes du Québec"
+						},
+						"code": {
+							"fr": "D"
+						}
+					}
+				},
 				"publicLawNumber": "784",
 				"url": "https://canlii.ca/t/hqdn",
 				"attachments": [],
@@ -1770,6 +2055,17 @@ var testCases = [
 				"codeNumber": "C-11",
 				"jurisdiction": "ca:qc",
 				"language": "en",
+				"multi": {
+					"main": {},
+					"_keys": {
+						"nameOfAct": {
+							"fr": "Règlement sur la langue du commerce et des affaires"
+						},
+						"code": {
+							"fr": "RLRQ"
+						}
+					}
+				},
 				"publicLawNumber": "9",
 				"regulationType": "Revised",
 				"url": "https://canlii.ca/t/52vms",
@@ -1792,6 +2088,17 @@ var testCases = [
 				"codeNumber": "2000",
 				"jurisdiction": "ca:yk",
 				"language": "en",
+				"multi": {
+					"main": {},
+					"_keys": {
+						"nameOfAct": {
+							"fr": "Rémunération - Règlement sur les officiers d'élection"
+						},
+						"code": {
+							"fr": "YD"
+						}
+					}
+				},
 				"publicLawNumber": "130",
 				"url": "https://canlii.ca/t/551hb",
 				"attachments": [],
@@ -1813,6 +2120,17 @@ var testCases = [
 				"codeNumber": "2000",
 				"jurisdiction": "ca:yk",
 				"language": "fr",
+				"multi": {
+					"main": {},
+					"_keys": {
+						"nameOfAct": {
+							"en": "Remuneration - Election Officers Regulation"
+						},
+						"code": {
+							"en": "YOIC"
+						}
+					}
+				},
 				"publicLawNumber": "130",
 				"url": "https://canlii.ca/t/6d2ln",
 				"attachments": [],
@@ -1834,6 +2152,17 @@ var testCases = [
 				"codeNumber": "06",
 				"jurisdiction": "ca:on",
 				"language": "en",
+				"multi": {
+					"main": {},
+					"_keys": {
+						"nameOfAct": {
+							"fr": "Compteurs intelligents : Recouvrement des frais"
+						},
+						"code": {
+							"fr": "Règl de l'Ont"
+						}
+					}
+				},
 				"publicLawNumber": "426",
 				"shortTitle": "Smart Meters",
 				"url": "https://canlii.ca/t/52w8w",
@@ -1856,6 +2185,10 @@ var testCases = [
 				"codeNumber": "67",
 				"jurisdiction": "ca:sk",
 				"language": "en",
+				"multi": {
+					"main": {},
+					"_keys": {}
+				},
 				"publicLawNumber": "541",
 				"url": "https://canlii.ca/t/52zv0",
 				"attachments": [],
@@ -1877,6 +2210,17 @@ var testCases = [
 				"codeNumber": "99",
 				"jurisdiction": "ca:nu",
 				"language": "en",
+				"multi": {
+					"main": {},
+					"_keys": {
+						"nameOfAct": {
+							"fr": "Règlement sur l'heure avancée et les fuseaux horaires"
+						},
+						"code": {
+							"fr": "Règl Nu"
+						}
+					}
+				},
 				"publicLawNumber": "045",
 				"url": "https://canlii.ca/t/kh6q",
 				"attachments": [],
@@ -1898,6 +2242,10 @@ var testCases = [
 				"codeNumber": "96",
 				"jurisdiction": "ca:nl",
 				"language": "en",
+				"multi": {
+					"main": {},
+					"_keys": {}
+				},
 				"publicLawNumber": "331",
 				"regulationType": "Revised",
 				"url": "https://canlii.ca/t/k23d",
@@ -1920,6 +2268,17 @@ var testCases = [
 				"codeNumber": "1990",
 				"jurisdiction": "ca:on",
 				"language": "fr",
+				"multi": {
+					"main": {},
+					"_keys": {
+						"nameOfAct": {
+							"en": "Accessible Vehicles"
+						},
+						"code": {
+							"en": "RRO"
+						}
+					}
+				},
 				"publicLawNumber": "629",
 				"regulationType": "Revised",
 				"url": "https://canlii.ca/t/692t5",
@@ -1943,6 +2302,10 @@ var testCases = [
 				"codeNumber": "F-15.1",
 				"jurisdiction": "ca:pe",
 				"language": "en",
+				"multi": {
+					"main": {},
+					"_keys": {}
+				},
 				"url": "https://canlii.ca/t/kt4z",
 				"attachments": [
 					{
